@@ -1,4 +1,4 @@
-**vision del producto: ** 
+**vision del producto:** 
 
 
-**mockups: **
+**mockups:**
