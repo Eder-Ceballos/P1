@@ -1,0 +1,22 @@
+# Entornos virtuales de Python
+venv/
+env/
+ENV/
+*/venv/
+
+# Caché y archivos compilados de Python
+*.pyc
+__pycache__/
+*/__pycache__/
+
+# Base de datos local de Django (no se debe subir al repositorio)
+db.sqlite3
+
+# Archivos cargados por usuarios/media (opcional pero recomendado)
+/media/
+*/media/
+
+# Archivos de sistema operativo y editores
+.DS_Store
+.vscode/
+.idea/
