@@ -3,13 +3,38 @@
 <head>
     <meta charset='utf-8'>
     <meta http-equiv='X-UA-Compatible' content='IE=edge'>
-    <title>Page Title</title>
+    <title>movies eder</title>
     <meta name='viewport' content='width=device-width, initial-scale=1'>
-    <link rel='stylesheet' type='text/css' media='screen' href='main.css'>
-    <script src='main.js'></script>
 </head>
 <body>
-    <h1>welcome, {{name}}</h1>
-    <h1>full page</h1>
+<div class="container">
+    <form method="GET" action="">
+        <div class="mb-3">
+            <label for="searchMovie" class="form-label">Search for Movie:</label>
+            <input type="text" class="form-control" name="searchMovie" value="{{ searchTerm|default:'' }}"/>
+        </div>
+        <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+
+    {% if searchTerm %}
+        <p class="mt-3">Searching for: <strong>{{ searchTerm }}</strong></p>
+    {% endif %}
+
+    {% for movie in movies %}
+        <div class="mt-4">
+            <h2>{{ movie.title }}</h2>
+            <h3>{{ movie.description }}</h3>
+            {% if movie.img %}
+                <img src="{{ movie.img.url }}" alt="{{ movie.title }}" style="max-width: 200px;">
+            {% endif %}
+            {% if movie.url %}
+                <br>
+                <a href="{{ movie.url }}">Movie Link</a>
+            {% endif %}
+        </div>
+    {% empty %}
+        <p class="mt-3 text-muted">No movies found.</p>
+    {% endfor %}
+</div>
 </body>
 </html>
