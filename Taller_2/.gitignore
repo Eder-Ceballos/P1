@@ -1,0 +1,4 @@
+*.pyc
+__pycache__/
+db.sqlite3
+movie/management/commands/movies.json
