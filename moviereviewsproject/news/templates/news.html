@@ -1,0 +1,269 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Noticias - MovieReviews</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .navbar-brand img {
+            height: 40px;
+            margin-right: 10px;
+        }
+        .nav-link {
+            color: white !important;
+            margin: 0 10px;
+            transition: opacity 0.3s ease;
+        }
+        .nav-link:hover {
+            opacity: 0.8;
+        }
+        .page-title {
+            color: #667eea;
+            font-weight: bold;
+        }
+        /* Estilos optimizados para las tarjetas de noticias */
+        .news-card {
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            border: none;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.06);
+            background-color: #ffffff;
+            margin-bottom: 24px;
+        }
+        .news-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.12);
+        }
+        .card-img-container {
+            height: 100%;
+            min-height: 220px;
+            overflow: hidden;
+        }
+        .card-img-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .card-img-placeholder {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100%;
+            min-height: 220px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 15px;
+            font-weight: 600;
+            text-align: center;
+            padding: 20px;
+        }
+        .news-date {
+            color: #667eea;
+            font-weight: 600;
+            font-size: 13px;
+        }
+        .news-category {
+            background-color: #764ba2;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+            display: inline-block;
+        }
+        .btn-read-more {
+            color: #667eea;
+            border-color: #667eea;
+            font-weight: 500;
+        }
+        .btn-read-more:hover {
+            background-color: #667eea;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <!-- NAVBAR -->
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'home' %}">
+                <img src="https://img.icons8.com/color/96/000000/film-reel.png" alt="Logo">
+                <strong>MovieReviews</strong>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'home' %}">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'movies' %}">Películas</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'movies_by_year' %}">Por Año</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'movies_by_genre' %}">Por Género</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{% url 'news' %}">Noticias</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- CONTENIDO PRINCIPAL -->
+    <div class="container py-5">
+        <h1 class="page-title mb-1">📰 Noticias de Cine</h1>
+        <p class="text-muted mb-4">Mantente actualizado con las últimas novedades del mundo cinematográfico</p>
+
+        <div class="row">
+            <div class="col-12 col-lg-10 mx-auto">
+
+                <!-- BUCLE DINÁMICO (Si hay objeto de noticias enviado desde el backend) -->
+                {% if news_list or news %}
+                    {% for item in news_list|default:news %}
+                    <div class="card news-card">
+                        <div class="row g-0">
+                            <!-- Imagen / Placeholder -->
+                            <div class="col-md-4">
+                                <div class="card-img-container">
+                                    {% if item.image %}
+                                        <img src="{{ item.image.url }}" alt="{{ item.headline|default:item.title }}">
+                                    {% elif item.img %}
+                                        <img src="{{ item.img.url }}" alt="{{ item.headline|default:item.title }}">
+                                    {% else %}
+                                        <div class="card-img-placeholder">
+                                            🎬 MovieReviews News
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <!-- Contenido de la Noticia -->
+                            <div class="col-md-8">
+                                <div class="card-body d-flex flex-column h-100 py-3 px-4">
+                                    <h5 class="card-title fw-bold text-dark mb-2">{{ item.headline|default:item.title }}</h5>
+                                    
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <span class="news-date">📅 {{ item.date|date:"d \d\e F, Y"|default:item.date }}</span>
+                                        {% if item.category %}
+                                            <span class="news-category">{{ item.category }}</span>
+                                        {% endif %}
+                                    </div>
+
+                                    <p class="card-text text-muted small mt-2 flex-grow-1">
+                                        {{ item.body|default:item.description|truncatewords:30 }}
+                                    </p>
+
+                                    <div class="pt-2">
+                                        <a href="#" class="btn btn-sm btn-read-more">Leer noticia completa →</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+
+                <!-- CONTENIDO ESTÁTICO DE RESPALDO -->
+                {% else %}
+                    <!-- NOTICIA -->
+                    <div class="card news-card">
+                        <div class="row g-0">
+                            <div class="col-md-4">
+                                <div class="card-img-placeholder">
+                                    🎬 Estrenos Próximos
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="card-body d-flex flex-column h-100 py-3 px-4">
+                                    <h5 class="card-title fw-bold text-dark mb-2">Nuevos Estrenos en Cines</h5>
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <span class="news-date">📅 15 de Agosto, 2026</span>
+                                        <span class="news-category">Estrenos</span>
+                                    </div>
+                                    <p class="card-text text-muted small mt-2 flex-grow-1">
+                                        Descubre las películas más esperadas que llegarán a las salas de cine en los próximos meses. Desde secuelas aclamadas hasta propuestas originales.
+                                    </p>
+                                    <div class="pt-2">
+                                        <a href="#" class="btn btn-sm btn-read-more">Leer noticia completa →</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- NOTICIA -->
+                    <div class="card news-card">
+                        <div class="row g-0">
+                            <div class="col-md-4">
+                                <div class="card-img-placeholder">
+                                    🏆 Premios Oscar
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="card-body d-flex flex-column h-100 py-3 px-4">
+                                    <h5 class="card-title fw-bold text-dark mb-2">Preparativos para los Premios Oscar</h5>
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <span class="news-date">📅 10 de Agosto, 2026</span>
+                                        <span class="news-category">Premios</span>
+                                    </div>
+                                    <p class="card-text text-muted small mt-2 flex-grow-1">
+                                        La Academia de Artes y Ciencias Cinematográficas adelanta detalles sobre la próxima temporada de premios y las producciones favoritas de la crítica.
+                                    </p>
+                                    <div class="pt-2">
+                                        <a href="#" class="btn btn-sm btn-read-more">Leer noticia completa →</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- NOTICIA -->
+                    <div class="card news-card">
+                        <div class="row g-0">
+                            <div class="col-md-4">
+                                <div class="card-img-placeholder">
+                                     Entrevistas
+                                </div>
+                            </div>
+                            <div class="col-md-8">
+                                <div class="card-body d-flex flex-column h-100 py-3 px-4">
+                                    <h5 class="card-title fw-bold text-dark mb-2">Exclusiva: Entrevista con Directores Reconocidos</h5>
+                                    <div class="d-flex align-items-center gap-2 mb-2">
+                                        <span class="news-date">📅 05 de Agosto, 2026</span>
+                                        <span class="news-category">Entrevistas</span>
+                                    </div>
+                                    <p class="card-text text-muted small mt-2 flex-grow-1">
+                                        Conoce el proceso creativo detrás de los proyectos cinematográficos más aclamados del año narrado por sus propios realizadores.
+                                    </p>
+                                    <div class="pt-2">
+                                        <a href="#" class="btn btn-sm btn-read-more">Leer noticia completa →</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                {% endif %}
+
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

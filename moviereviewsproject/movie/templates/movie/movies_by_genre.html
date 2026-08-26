@@ -1,0 +1,165 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Películas por Género - MovieReviews</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        body {
+            background-color: #f8f9fa;
+        }
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .navbar-brand img {
+            height: 40px;
+            margin-right: 10px;
+        }
+        .nav-link {
+            color: white !important;
+            margin: 0 10px;
+            transition: opacity 0.3s ease;
+        }
+        .nav-link:hover {
+            opacity: 0.8;
+        }
+        .page-title {
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .chart-card {
+            background: #ffffff;
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            padding: 30px;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 420px;
+        }
+    </style>
+</head>
+<body>
+    <!-- navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark sticky-top">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{% url 'home' %}">
+                <img src="https://img.icons8.com/color/96/000000/film-reel.png" alt="Logo">
+                <strong>MovieReviews</strong>
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'home' %}">Inicio</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'movies' %}">Películas</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'movies_by_year' %}">Por Año</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="{% url 'movies_by_genre' %}">Por Género</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'news' %}">Noticias</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- contenido -->
+    <div class="container py-5">
+        <h1 class="page-title mb-4">🎭 Películas por Género</h1>
+        
+        <div class="row">
+            <div class="col-12 col-lg-10 mx-auto">
+                <div class="chart-card">
+                    <div class="chart-container">
+                        <canvas id="genreChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const genres = JSON.parse('{{ genres|escapejs }}');
+        const counts = JSON.parse('{{ counts|escapejs }}');
+
+        const colors = [
+            'rgba(102, 126, 234, 0.85)',
+            'rgba(118, 75, 162, 0.85)',
+            'rgba(237, 100, 166, 0.85)',
+            'rgba(255, 154, 158, 0.85)',
+            'rgba(250, 208, 196, 0.85)',
+            'rgba(255, 218, 185, 0.85)',
+            'rgba(255, 239, 213, 0.85)',
+            'rgba(240, 255, 240, 0.85)'
+        ];
+
+        const borderColors = [
+            '#667eea',
+            '#764ba2',
+            '#ed64a6',
+            '#ff9a9e',
+            '#fad0c4',
+            '#ffdab9',
+            '#ffefd5',
+            '#f0fff0'
+        ];
+
+        const ctx = document.getElementById('genreChart').getContext('2d');
+        const genreChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: genres,
+                datasets: [{
+                    label: 'Cantidad de Películas',
+                    data: counts,
+                    backgroundColor: colors.slice(0, genres.length),
+                    borderColor: borderColors.slice(0, genres.length),
+                    borderWidth: 2,
+                    hoverOffset: 8
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: true,
+                        position: 'bottom',
+                        labels: {
+                            padding: 20,
+                            font: { size: 13, family: 'system-ui' }
+                        }
+                    },
+                    title: {
+                        display: true,
+                        text: 'Distribución por Género Cinematográfico',
+                        padding: { bottom: 20 },
+                        font: { size: 16, weight: 'bold', family: 'system-ui' },
+                        color: '#495057'
+                    }
+                }
+            }
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
