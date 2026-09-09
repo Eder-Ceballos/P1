@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>RISTOKIA</title>
+</head>
+<body>
+
+    <h1>Cuentas</h1>
+
+    <a href="/registrar">Registrar cuenta</a>
+
+    <h2>Cuentas registradas</h2>
+
+    {% for cuenta in cuentas %}
+        <p>
+            Cuenta: {{ cuenta.cuentaNombre }}
+            Tipo: {{ cuenta.tipo }} |
+            Saldo: ${{ cuenta.saldo }}
+        </p>
+    {% empty %}
+        <p>No hay cuentas registradas.</p>
+    {% endfor %}
+
+    <a href="/">Volver</a>
+</body>
+</html>
