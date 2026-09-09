@@ -1,68 +1,69 @@
+---
 
-# Proyecto Finanzas — Backend API
+# Finance Project — Backend API
 
-Aplicación web para la gestión de finanzas personales, diseñada para registrar y administrar ingresos, egresos y flujos financieros. 
+A web application for personal finance management, designed to track and manage income, expenses, and financial flows.
 
-Este repositorio contiene la API fundacional construida con **Django** y **Django REST Framework (DRF)**, preparada para una futura integración con un frontend en **React** y microservicios de Inteligencia Artificial mediante **FastAPI**.
+This repository contains the foundational API built with **Django** and **Django REST Framework (DRF)**, prepared for future integration with a **React** frontend and Artificial Intelligence microservices powered by **FastAPI**.
 
 ---
 
-##  Tecnologías Utilizadas
+##  Technologies Used
 
-* **Lenguaje:** Python 3.14+
-* **Framework Web:** Django 6.1.1
+* **Language:** Python 3.14+
+* **Web Framework:** Django 6.1.1
 * **API Framework:** Django REST Framework 3.18.1
-* **Base de Datos:** SQLite (Desarrollo)
+* **Database:** SQLite (Development)
 
 ---
 
-##  Requisitos Previos
+##  Prerequisites
 
-Asegúrate de contar con **Python** (versión 3.14 o superior) y `pip` instalados en tu sistema operativo.
+Make sure you have **Python** (version 3.14 or higher) and `pip` installed on your operating system.
 
 ---
 
-##  Instrucciones de Ejecución
+##  Execution Instructions
 
-Sigue estos pasos en orden para configurar y ejecutar el entorno de desarrollo local.
+Follow these steps in order to set up and run the local development environment.
 
-### 1. Clonar el repositorio y configurar el entorno virtual
+### 1. Clone the repository and set up the virtual environment
 
 ```bash
-# Clonar el repositorio
-git clone <URL_DEL_REPOSITORIO>
-cd <NOMBRE_DE_LA_CARPETA>
+# Clone the repository
+git clone <REPOSITORY_URL>
+cd <FOLDER_NAME>
 
-# Crear el entorno virtual
+# Create the virtual environment
 python -m venv venv
 
-# Activar el entorno virtual
-# En Linux/macOS (Bash/Zsh):
+# Activate the virtual environment
+# On Linux/macOS (Bash/Zsh):
 source venv/bin/activate
 
-# En Linux/macOS (Fish):
+# On Linux/macOS (Fish):
 source venv/bin/activate.fish
 
-# En Windows (CMD):
+# On Windows (CMD):
 venv\Scripts\activate.bat
 
-# En Windows (PowerShell):
+# On Windows (PowerShell):
 venv\Scripts\Activate.ps1
 
+```
 
+### 2. Install dependencies
 
-### 2. Instalar dependencias
-
-Instala todas las librerías necesarias ejecutando:
+Install all required packages by running:
 
 ```bash
 pip install -r requirements.txt
 
 ```
 
-### 3. Configurar la Base de Datos
+### 3. Set up the Database
 
-Aplica las migraciones para inicializar el esquema de la base de datos (*Usuarios*, *Categorías*, *Cuentas* y *Transacciones*):
+Apply migrations to initialize the database schema (*Users*, *Categories*, *Accounts*, and *Transactions*):
 
 ```bash
 python manage.py makemigrations
@@ -70,37 +71,37 @@ python manage.py migrate
 
 ```
 
-*(Opcional)* Crea un superusuario para administrar la plataforma desde el panel de Django:
+*(Optional)* Create a superuser to access and manage the platform via the Django admin panel:
 
 ```bash
 python manage.py createsuperuser
 
 ```
 
-### 4. Ejecutar el Servidor
+### 4. Run the Server
 
-Inicia el servidor de desarrollo local:
+Start the local development server:
 
 ```bash
 python manage.py runserver
 
 ```
 
-El servidor estará disponible en: **`http://127.0.0.1:8000/`**
+The server will be available at: **`[http://127.0.0.1:8000/](http://127.0.0.1:8000/)`**
 
 ---
 
-## 🔌 Endpoints de la API
+##  API Endpoints
 
-Actualmente, el sistema cuenta con el módulo fundacional de gestión de transacciones.
+Currently, the system features the foundational transaction management module.
 
-### Registrar Transacción Manual
+### Register Manual Transaction
 
 * **URL:** `/api/transacciones/registrar/`
-* **Método:** `POST`
-* **Descripción:** Permite registrar un nuevo ingreso o gasto asociado a un usuario.
+* **Method:** `POST`
+* **Description:** Allows registering a new income or expense associated with a user.
 
-#### Ejemplo de Cuerpo de la Petición (`JSON`):
+#### Request Body Example (`JSON`):
 
 ```json
 {
@@ -108,32 +109,28 @@ Actualmente, el sistema cuenta con el módulo fundacional de gestión de transac
   "tipo": "gasto",
   "monto": "45000.00",
   "fecha": "2026-09-08",
-  "descripcion": "Compra de mercado en Tienda D1",
+  "descripcion": "Grocery shopping at Tienda D1",
   "categoria": null,
   "cuenta": null
 }
 
 ```
 
-#### Respuestas:
+#### Responses:
 
-| Código | Estado | Descripción |
+| Code | Status | Description |
 | --- | --- | --- |
-| `201 Created` | Éxito | Devuelve el objeto creado incluyendo su `id` asignado. |
-| `400 Bad Request` | Error | Faltan campos obligatorios o los datos enviados son inválidos. |
+| `201 Created` | Success | Returns the created object including its assigned `id`. |
+| `400 Bad Request` | Error | Required fields are missing or the submitted data is invalid. |
 
 ---
 
-##  Arquitectura del Sistema
+##  System Architecture
 
-El proyecto implementa principios de **Domain-Driven Design (DDD)** dentro de sus aplicaciones principales (ej. `transacciones/`), estructurando la lógica interna en capas claras:
+The project implements **Domain-Driven Design (DDD)** principles within its core applications (e.g., `transacciones/`), structuring internal logic into clear layers:
 
-* **Domain (`domain/`):** Modelos de dominio y reglas de negocio puras.
-* **Infrastructure (`infra/`):** Interacción con la base de datos, ORM de Django y servicios externos.
-* **Services (`services/`):** Casos de uso y orquestación de flujos financieros.
+* **Domain (`domain/`):** Pure business logic and domain models.
+* **Infrastructure (`infra/`):** Database interactions, Django ORM, and external services.
+* **Services (`services/`):** Use cases and orchestration of financial flows.
 
-Esta separación desacoplada facilita la escalabilidad del sistema y la futura integración de módulos como gestión avanzada de cuentas bancarias y categorización automática mediante IA.
-
-```
-
-```
+This decoupled separation facilitates system scalability and seamless future integration of modules such as advanced bank account management and automated AI categorization.
