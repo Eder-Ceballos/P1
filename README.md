@@ -1,4 +1,4 @@
-```markdown
+
 # Proyecto Finanzas — Backend API
 
 Aplicación web para la gestión de finanzas personales, diseñada para registrar y administrar ingresos, egresos y flujos financieros. 
@@ -49,7 +49,7 @@ venv\Scripts\activate.bat
 # En Windows (PowerShell):
 venv\Scripts\Activate.ps1
 
-```
+
 
 ### 2. Instalar dependencias
 
