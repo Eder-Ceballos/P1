@@ -3,9 +3,21 @@ from django.db import transaction
 from .models import Transaccion
 
 class TransaccionSerializer(serializers.ModelSerializer):
+    nombre_cuenta = serializers.ReadOnlyField(source='cuenta.nombre')
+
     class Meta:
         model = Transaccion
-        fields = ['id', 'usuario', 'cuenta', 'categoria', 'monto', 'tipo', 'descripcion', 'fecha']
+        fields = [
+            'id', 
+            'usuario', 
+            'cuenta', 
+            'nombre_cuenta', 
+            'categoria', 
+            'monto', 
+            'tipo', 
+            'descripcion', 
+            'fecha'
+        ]
         read_only_fields = ['fecha']
 
     def create(self, validated_data):
@@ -25,7 +37,7 @@ class TransaccionSerializer(serializers.ModelSerializer):
                 cuenta.saldo += monto
             elif tipo == 'gasto':
                 cuenta.saldo -= monto
-            
+
             cuenta.save()
             transaccion_instancia = Transaccion.objects.create(**validated_data)
 

@@ -17,9 +17,19 @@ class RegistroTransaccionView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class HistorialTransaccionesView(APIView):
-    """Endpoint para listar todo el historial de transacciones."""
+    """Endpoint para listar el historial de transacciones con opción de filtrado."""
     def get(self, request):
         transacciones = Transaccion.objects.all().order_by('-fecha', '-id')
+
+        # Obtener parámetros de filtro de la URL
+        tipo = request.query_params.get('tipo')       # 'ingreso' o 'gasto'
+        cuenta_id = request.query_params.get('cuenta') # ID de la cuenta
+
+        if tipo:
+            transacciones = transacciones.filter(tipo__iexact=tipo)
+        if cuenta_id:
+            transacciones = transacciones.filter(cuenta_id=cuenta_id)
+
         serializer = TransaccionSerializer(transacciones, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
