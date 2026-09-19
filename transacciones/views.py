@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 from .models import Transaccion
+from .models import Usuario
 from .serializers import TransaccionSerializer
 from .services import TransaccionService
 
@@ -56,3 +57,29 @@ class DetalleTransaccionView(APIView):
             status=status.HTTP_204_NO_CONTENT
         )
 
+class RegistrarUsuarioView(APIView):
+    """Endpoint para registrar un nuevo usuario."""
+    def post(self, request):
+        nombre = request.data.get('nombre')
+        if not nombre or not nombre.strip():
+            return Response({'error': 'El nombre de usuario es obligatorio'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        nombre_clean = nombre.strip()
+        if Usuario.objects.filter(nombre__iexact=nombre_clean).exists():
+            return Response({'error': 'El usuario ya existe. Intenta iniciar sesión.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        usuario = Usuario.objects.create(nombre=nombre_clean)
+        return Response({'id': usuario.id, 'nombre': usuario.nombre}, status=status.HTTP_201_CREATED)
+
+class LoginUsuarioView(APIView):
+    """Endpoint para iniciar sesión con un usuario existente."""
+    def post(self, request):
+        nombre = request.data.get('nombre')
+        if not nombre or not nombre.strip():
+            return Response({'error': 'Ingresa tu nombre de usuario'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        try:
+            usuario = Usuario.objects.get(nombre__iexact=nombre.strip())
+            return Response({'id': usuario.id, 'nombre': usuario.nombre}, status=status.HTTP_200_OK)
+        except Usuario.DoesNotExist:
+            return Response({'error': 'Usuario no encontrado. Verifica el nombre o regístrate.'}, status=status.HTTP_404_NOT_FOUND)
