@@ -34,7 +34,6 @@ class HistorialTransaccionesView(APIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 class DetalleTransaccionView(APIView):
-    """Endpoint para ver, actualizar o eliminar una transacción individual."""
     def get(self, request, pk):
         transaccion = get_object_or_404(Transaccion, pk=pk)
         serializer = TransaccionSerializer(transaccion)
@@ -56,3 +55,4 @@ class DetalleTransaccionView(APIView):
             {"mensaje": "Transacción eliminada y saldo de la cuenta reajustado correctamente."},
             status=status.HTTP_204_NO_CONTENT
         )
+

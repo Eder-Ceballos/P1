@@ -29,42 +29,46 @@ class TransaccionService:
 
     @staticmethod
     def actualizar_transaccion(transaccion, nuevos_datos):
-        """Ajusta el saldo de la cuenta recalculando la diferencia al editar una transacción."""
-        cuenta_antigua = transaccion.cuenta
-        monto_antiguo = transaccion.monto
-        tipo_antiguo = transaccion.tipo
+        """
+        Permite la edición completa de una transacción, recalculando el saldo 
+        de la cuenta original y la nueva cuenta si hubo un cambio de cuenta de origen.
+        """
+        cuenta_vieja = transaccion.cuenta
+        monto_viejo = transaccion.monto
+        tipo_viejo = transaccion.tipo
 
-        cuenta_nueva = nuevos_datos.get('cuenta', cuenta_antigua)
-        monto_nuevo = nuevos_datos.get('monto', monto_antiguo)
-        tipo_nuevo = nuevos_datos.get('tipo', tipo_antiguo)
+        cuenta_nueva = nuevos_datos.get('cuenta', cuenta_vieja)
+        monto_nuevo = nuevos_datos.get('monto', monto_viejo)
+        tipo_nuevo = nuevos_datos.get('tipo', tipo_viejo)
 
         with transaction.atomic():
-            # 1. Revertir el efecto de la transacción vieja en la cuenta antigua
-            if tipo_antiguo == 'ingreso':
-                cuenta_antigua.saldo -= monto_antiguo
-            elif tipo_antiguo == 'gasto':
-                cuenta_antigua.saldo += monto_antiguo
-            cuenta_antigua.save()
+            # 1. Revertir el impacto de la transacción original en la cuenta vieja
+            if cuenta_vieja:
+                if tipo_viejo == 'ingreso':
+                    cuenta_vieja.saldo -= monto_viejo
+                elif tipo_viejo == 'gasto':
+                    cuenta_vieja.saldo += monto_viejo
+                cuenta_vieja.save()
 
-            # Refresh por si la cuenta es la misma
-            if cuenta_nueva.id == cuenta_antigua.id:
+            # Refrescar instancia si la cuenta de origen y destino es la misma
+            if cuenta_nueva and cuenta_vieja and cuenta_nueva.id == cuenta_vieja.id:
                 cuenta_nueva.refresh_from_db()
 
-            # 2. Validar que la cuenta nueva tenga fondos si la edición resulta en un gasto
-            if tipo_nuevo == 'gasto' and cuenta_nueva.saldo < monto_nuevo:
-                # Si no alcanza, deshacemos revirtiendo la operación
+            # 2. Validar si la cuenta nueva tiene saldo suficiente ante el nuevo gasto
+            if cuenta_nueva and tipo_nuevo == 'gasto' and cuenta_nueva.saldo < monto_nuevo:
                 raise serializers.ValidationError({
-                    "monto": f"Saldo insuficiente para realizar el cambio en la cuenta '{cuenta_nueva.nombre}'."
+                    "monto": f"Saldo insuficiente en la cuenta '{cuenta_nueva.nombre}'. Saldo disponible: ${cuenta_nueva.saldo}"
                 })
 
-            # 3. Aplicar el efecto de la nueva transacción
-            if tipo_nuevo == 'ingreso':
-                cuenta_nueva.saldo += monto_nuevo
-            elif tipo_nuevo == 'gasto':
-                cuenta_nueva.saldo -= monto_nuevo
-            cuenta_nueva.save()
+            # 3. Aplicar el impacto de la nueva transacción en la cuenta nueva
+            if cuenta_nueva:
+                if tipo_nuevo == 'ingreso':
+                    cuenta_nueva.saldo += monto_nuevo
+                elif tipo_nuevo == 'gasto':
+                    cuenta_nueva.saldo -= monto_nuevo
+                cuenta_nueva.save()
 
-            # 4. Actualizar los campos del modelo
+            # 4. Actualizar todos los campos modificados en la transacción
             for campo, valor in nuevos_datos.items():
                 setattr(transaccion, campo, valor)
             transaccion.save()
@@ -73,7 +77,6 @@ class TransaccionService:
 
     @staticmethod
     def eliminar_transaccion(transaccion):
-        """Devuelve/reajusta el dinero a la cuenta antes de borrar la transacción."""
         cuenta = transaccion.cuenta
         monto = transaccion.monto
         tipo = transaccion.tipo
