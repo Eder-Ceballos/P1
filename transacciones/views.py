@@ -83,3 +83,13 @@ class LoginUsuarioView(APIView):
             return Response({'id': usuario.id, 'nombre': usuario.nombre}, status=status.HTTP_200_OK)
         except Usuario.DoesNotExist:
             return Response({'error': 'Usuario no encontrado. Verifica el nombre o regístrate.'}, status=status.HTTP_404_NOT_FOUND)
+
+class ReporteFinancieroView(APIView):
+    """Endpoint para obtener las métricas analíticas preparadas para UI e IA."""
+    def get(self, request):
+        usuario_id = request.query_params.get('usuario')
+        if not usuario_id:
+            return Response({'error': 'El parámetro usuario es requerido'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        reporte = TransaccionService.obtener_reporte_financiero(int(usuario_id))
+        return Response(reporte, status=status.HTTP_200_OK)

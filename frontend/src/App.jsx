@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { UserSelection } from './components/UserSelection';
 import { AccountsManager } from './components/AccountsManager';
-import { LogOut } from 'lucide-react';
+import { AnalyticsDashboard } from './components/AnalyticsDashboard';
+import { Sidebar } from './components/Sidebar';
+import { Menu, LogOut } from 'lucide-react';
 
 export default function App() {
   const [usuario, setUsuario] = useState(null);
+  const [activeView, setActiveView] = useState('dashboard'); // 'dashboard' o 'analytics'
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
     const sesionGuardada = localStorage.getItem('usuario_activo');
@@ -24,8 +28,25 @@ export default function App() {
 
   return (
     <div style={styles.appContainer}>
+      {/* Menú Lateral Desplegable */}
+      <Sidebar
+        activeView={activeView}
+        setActiveView={setActiveView}
+        isOpen={sidebarOpen}
+        setIsOpen={setSidebarOpen}
+        usuario={usuario}
+        onLogout={handleCerrarSesion}
+      />
+
+      {/* Navbar Superior */}
       <header style={styles.navbar}>
-        <h1 style={styles.title}>Panel Financiero</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <button style={styles.menuBtn} onClick={() => setSidebarOpen(true)}>
+            <Menu size={22} color="#f8fafc" />
+          </button>
+          <h1 style={styles.title}>Panel Financiero</h1>
+        </div>
+
         <div style={styles.userSection}>
           <span style={styles.userName}>Usuario: {usuario.nombre}</span>
           <button onClick={handleCerrarSesion} style={styles.logoutButton}>
@@ -34,8 +55,16 @@ export default function App() {
         </div>
       </header>
 
+      {/* Contenido Dinámico */}
       <main style={styles.mainContent}>
-        <AccountsManager usuario={usuario} />
+        {activeView === 'dashboard' ? (
+          <AccountsManager usuario={usuario} />
+        ) : (
+          <AnalyticsDashboard
+            usuario={usuario}
+            onBackToMain={() => setActiveView('dashboard')}
+          />
+        )}
       </main>
     </div>
   );
@@ -55,6 +84,13 @@ const styles = {
     padding: '1.2rem 2rem',
     backgroundColor: '#1e293b',
     borderBottom: '1px solid #334155',
+  },
+  menuBtn: {
+    backgroundColor: 'transparent',
+    border: 'none',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
   },
   title: {
     fontSize: '1.3rem',

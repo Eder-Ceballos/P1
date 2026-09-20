@@ -1,4 +1,5 @@
 from django.db import transaction
+from django.db.models import Sum
 from rest_framework import serializers
 from .models import Transaccion
 
@@ -29,10 +30,6 @@ class TransaccionService:
 
     @staticmethod
     def actualizar_transaccion(transaccion, nuevos_datos):
-        """
-        Permite la edición completa de una transacción, recalculando el saldo 
-        de la cuenta original y la nueva cuenta si hubo un cambio de cuenta de origen.
-        """
         cuenta_vieja = transaccion.cuenta
         monto_viejo = transaccion.monto
         tipo_viejo = transaccion.tipo
@@ -42,7 +39,6 @@ class TransaccionService:
         tipo_nuevo = nuevos_datos.get('tipo', tipo_viejo)
 
         with transaction.atomic():
-            # 1. Revertir el impacto de la transacción original en la cuenta vieja
             if cuenta_vieja:
                 if tipo_viejo == 'ingreso':
                     cuenta_vieja.saldo -= monto_viejo
@@ -50,17 +46,14 @@ class TransaccionService:
                     cuenta_vieja.saldo += monto_viejo
                 cuenta_vieja.save()
 
-            # Refrescar instancia si la cuenta de origen y destino es la misma
             if cuenta_nueva and cuenta_vieja and cuenta_nueva.id == cuenta_vieja.id:
                 cuenta_nueva.refresh_from_db()
 
-            # 2. Validar si la cuenta nueva tiene saldo suficiente ante el nuevo gasto
             if cuenta_nueva and tipo_nuevo == 'gasto' and cuenta_nueva.saldo < monto_nuevo:
                 raise serializers.ValidationError({
                     "monto": f"Saldo insuficiente en la cuenta '{cuenta_nueva.nombre}'. Saldo disponible: ${cuenta_nueva.saldo}"
                 })
 
-            # 3. Aplicar el impacto de la nueva transacción en la cuenta nueva
             if cuenta_nueva:
                 if tipo_nuevo == 'ingreso':
                     cuenta_nueva.saldo += monto_nuevo
@@ -68,7 +61,6 @@ class TransaccionService:
                     cuenta_nueva.saldo -= monto_nuevo
                 cuenta_nueva.save()
 
-            # 4. Actualizar todos los campos modificados en la transacción
             for campo, valor in nuevos_datos.items():
                 setattr(transaccion, campo, valor)
             transaccion.save()
@@ -90,3 +82,42 @@ class TransaccionService:
                 cuenta.save()
 
             transaccion.delete()
+
+    @staticmethod
+    def obtener_reporte_financiero(usuario_id):
+        from app.models import CuentaBancaria
+        from .models import Transaccion
+
+        cuentas = CuentaBancaria.objects.filter(usuario_id=usuario_id)
+        saldo_total = sum(float(c.saldo) for c in cuentas)
+
+        transacciones = Transaccion.objects.filter(usuario_id=usuario_id)
+
+        total_ingresos = transacciones.filter(tipo__iexact='ingreso').aggregate(Sum('monto'))['monto__sum'] or 0
+        total_gastos = transacciones.filter(tipo__iexact='gasto').aggregate(Sum('monto'))['monto__sum'] or 0
+
+        gastos_qs = transacciones.filter(tipo__iexact='gasto')
+        
+        desglose_categorias = {}
+        gastos_hormiga_estimados = 0
+
+        for t in gastos_qs:
+            monto = float(t.monto)
+            cat = t.descripcion.split(' - ')[0] if ' - ' in t.descripcion else t.descripcion
+            desglose_categorias[cat] = desglose_categorias.get(cat, 0) + monto
+
+            if monto <= 20000 and cat in ['Alimentación', 'Entretenimiento', 'Otra']:
+                gastos_hormiga_estimados += monto
+
+        return {
+            "resumen_general": {
+                "balance_total": round(saldo_total, 2),
+                "total_ingresos": round(float(total_ingresos), 2),
+                "total_gastos": round(float(total_gastos), 2),
+                "gastos_hormiga_estimados": round(gastos_hormiga_estimados, 2),
+            },
+            "desglose_categorias": [
+                {"categoria": k, "monto": round(v, 2)}
+                for k, v in sorted(desglose_categorias.items(), key=lambda x: x[1], reverse=True)
+            ]
+        }
