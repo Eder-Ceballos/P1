@@ -84,14 +84,19 @@ class TransaccionService:
             transaccion.delete()
 
     @staticmethod
-    def obtener_reporte_financiero(usuario_id):
+    def obtener_reporte_financiero(usuario_id, cuenta_id=None):
         from app.models import CuentaBancaria
         from .models import Transaccion
 
         cuentas = CuentaBancaria.objects.filter(usuario_id=usuario_id)
+        if cuenta_id:
+            cuentas = cuentas.filter(id=cuenta_id)
+
         saldo_total = sum(float(c.saldo) for c in cuentas)
 
         transacciones = Transaccion.objects.filter(usuario_id=usuario_id)
+        if cuenta_id:
+            transacciones = transacciones.filter(cuenta_id=cuenta_id)
 
         total_ingresos = transacciones.filter(tipo__iexact='ingreso').aggregate(Sum('monto'))['monto__sum'] or 0
         total_gastos = transacciones.filter(tipo__iexact='gasto').aggregate(Sum('monto'))['monto__sum'] or 0

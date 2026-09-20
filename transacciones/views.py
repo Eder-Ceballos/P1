@@ -88,8 +88,11 @@ class ReporteFinancieroView(APIView):
     """Endpoint para obtener las métricas analíticas preparadas para UI e IA."""
     def get(self, request):
         usuario_id = request.query_params.get('usuario')
+        cuenta_id = request.query_params.get('cuenta')
+        
         if not usuario_id:
             return Response({'error': 'El parámetro usuario es requerido'}, status=status.HTTP_400_BAD_REQUEST)
             
-        reporte = TransaccionService.obtener_reporte_financiero(int(usuario_id))
+        cuenta_id_int = int(cuenta_id) if cuenta_id else None
+        reporte = TransaccionService.obtener_reporte_financiero(int(usuario_id), cuenta_id=cuenta_id_int)
         return Response(reporte, status=status.HTTP_200_OK)

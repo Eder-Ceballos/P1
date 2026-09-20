@@ -74,8 +74,10 @@ const styles = {
   appContainer: {
     backgroundColor: '#0f172a',
     minHeight: '100vh',
+    width: '100vw',
     color: '#f8fafc',
     fontFamily: 'system-ui, sans-serif',
+    boxSizing: 'border-box',
   },
   navbar: {
     display: 'flex',
@@ -84,6 +86,8 @@ const styles = {
     padding: '1.2rem 2rem',
     backgroundColor: '#1e293b',
     borderBottom: '1px solid #334155',
+    width: '100%',
+    boxSizing: 'border-box',
   },
   menuBtn: {
     backgroundColor: 'transparent',
@@ -118,8 +122,9 @@ const styles = {
     fontWeight: 'bold',
   },
   mainContent: {
-    maxWidth: '1100px',
-    margin: '0 auto',
-    padding: '0 1.5rem',
+    maxWidth: '100%', // Ampliado para abarcar mejor pantallas anchas
+    width: '100%',       // Ocupa el 95% del viewport de manera fluida
+    boxSizing: 'border-box',
+    padding: '1.5rem 2rem',
   },
 };
