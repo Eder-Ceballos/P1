@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
-import { CreditCard, PlusCircle, Wallet, Building2, AlertCircle } from 'lucide-react';
+import { CreditCard, PlusCircle, Wallet, Building2, AlertCircle, Trash2 } from 'lucide-react';
 import { TransactionForm } from './TransactionForm';
 import { TransactionHistory } from './TransactionHistory';
 
@@ -69,6 +69,22 @@ export function AccountsManager({ usuario }) {
     }
   };
 
+  // Manejador para eliminar una cuenta bancaria
+  const handleEliminarCuenta = async (id, nombre) => {
+    const confirmar = window.confirm(
+      `¿Estás seguro de que deseas eliminar la cuenta "${nombre}"? Se eliminarán también las transacciones vinculadas a esta cuenta.`
+    );
+    if (!confirmar) return;
+
+    try {
+      setError('');
+      await api.delete(`/cuentas/${id}/`);
+      cargarCuentas(); // Recargar la lista de cuentas
+    } catch {
+      setError('Ocurrió un error al intentar eliminar la cuenta.');
+    }
+  };
+
   return (
     <div style={styles.container}>
       <div style={styles.header}>
@@ -104,7 +120,16 @@ export function AccountsManager({ usuario }) {
                     <Building2 size={24} color="#3b82f6" />
                   )}
                 </div>
-                <span style={styles.typeBadge}>{cuenta.tipo}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={styles.typeBadge}>{cuenta.tipo}</span>
+                  <button
+                    onClick={() => handleEliminarCuenta(cuenta.id, cuenta.nombre)}
+                    style={styles.deleteAccountBtn}
+                    title="Eliminar cuenta"
+                  >
+                    <Trash2 size={16} color="#ef4444" />
+                  </button>
+                </div>
               </div>
               <h3 style={styles.accountName}>{cuenta.nombre}</h3>
               <p style={styles.balanceLabel}>Saldo Disponible</p>
@@ -250,6 +275,15 @@ const styles = {
     color: '#cbd5e1',
     padding: '0.2rem 0.6rem',
     borderRadius: '1rem',
+  },
+  deleteAccountBtn: {
+    backgroundColor: 'transparent',
+    border: 'none',
+    cursor: 'pointer',
+    padding: '0.2rem',
+    display: 'flex',
+    alignItems: 'center',
+    borderRadius: '0.3rem',
   },
   accountName: {
     fontSize: '1.2rem',

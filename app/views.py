@@ -21,17 +21,18 @@ class RegistroCuentaView(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-class DetalleCuentaView(APIView):
-    """Consultar, actualizar o eliminar una cuenta por su ID."""
-    def get(self, request, pk):
-        cuenta = get_object_or_404(CuentaBancaria, pk=pk)
-        serializer = CuentaBancariaSerializer(cuenta)
-        return Response(serializer.data, status=status.HTTP_200_OK)
+class DetalleCuentaBancariaView(APIView):
+    """Endpoint para obtener, actualizar o eliminar una cuenta bancaria especifica."""
 
     def delete(self, request, pk):
         cuenta = get_object_or_404(CuentaBancaria, pk=pk)
-        cuenta.delete()
+        
+        with transaction.atomic():
+            # Eliminamos las transacciones asociadas a esta cuenta para no dejar huerfanos los registros
+            Transaccion.objects.filter(cuenta=cuenta).delete()
+            cuenta.delete()
+
         return Response(
-            {"mensaje": "Cuenta bancaria eliminada correctamente."},
+            {"mensaje": "Cuenta bancaria y sus transacciones asociadas eliminadas correctamente."},
             status=status.HTTP_204_NO_CONTENT
         )
