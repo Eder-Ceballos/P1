@@ -7,22 +7,23 @@ from .models import CuentaBancaria, Suscripcion
 from .serializers import CuentaBancariaSerializer, SuscripcionSerializer
 from transacciones.models import Transaccion
 
-
 class ListaCuentasView(APIView):
-    """Listar todas las cuentas bancarias registradas."""
+    """Endpoint para obtener todas las cuentas bancarias."""
     def get(self, request):
         cuentas = CuentaBancaria.objects.all()
         serializer = CuentaBancariaSerializer(cuentas, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+
 class RegistroCuentaView(APIView):
-    """Registrar una nueva cuenta bancaria."""
+    """Endpoint para registrar una nueva cuenta bancaria."""
     def post(self, request):
         serializer = CuentaBancariaSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class DetalleCuentaBancariaView(APIView):
     """Endpoint para obtener, actualizar o eliminar una cuenta bancaria específica."""
@@ -52,18 +53,22 @@ class DetalleCuentaBancariaView(APIView):
             status=status.HTTP_204_NO_CONTENT
         )
 
+
 class ListaSuscripcionesView(APIView):
     """Endpoint para listar y registrar suscripciones recurrentes."""
     def get(self, request):
         usuario_id = request.query_params.get('usuario')
         cuenta_id = request.query_params.get('cuenta')
 
-        if not usuario_id:
-            return Response({'error': 'El parámetro usuario es requerido'}, status=status.HTTP_400_BAD_REQUEST)
+        suscripciones = Suscripcion.objects.all()
 
-        suscripciones = Suscripcion.objects.filter(usuario_id=usuario_id)
+        if usuario_id:
+            suscripciones = suscripciones.filter(usuario_id=usuario_id)
         if cuenta_id:
             suscripciones = suscripciones.filter(cuenta_id=cuenta_id)
+
+        if not usuario_id and not cuenta_id:
+            return Response({'error': 'Se requiere al menos el parámetro usuario o cuenta'}, status=status.HTTP_400_BAD_REQUEST)
 
         suscripciones = suscripciones.order_by('fecha_proximo_pago')
         serializer = SuscripcionSerializer(suscripciones, many=True)
@@ -75,6 +80,7 @@ class ListaSuscripcionesView(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 
 class DetalleSuscripcionView(APIView):
     """Endpoint para editar o eliminar una suscripción específica."""
