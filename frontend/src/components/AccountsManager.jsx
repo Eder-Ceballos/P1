@@ -1,19 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
-import { CreditCard, PlusCircle, Wallet, Building2, AlertCircle, Trash2 } from 'lucide-react';
+import { CreditCard, PlusCircle, Wallet, Building2, AlertCircle } from 'lucide-react';
 import { TransactionForm } from './TransactionForm';
 import { TransactionHistory } from './TransactionHistory';
+import { AccountDetailModal } from './AccountDetailModal';
 
 export function AccountsManager({ usuario }) {
   const [cuentas, setCuentas] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [error, setError] = useState('');
+  const [selectedCuentaModal, setSelectedCuentaModal] = useState(null);
+  const [showDetailModal, setShowDetailModal] = useState(false);
 
-  // Campos del formulario
+  // Campos del formulario de creación
   const [nombreCuenta, setNombreCuenta] = useState('');
   const [tipoCuenta, setTipoCuenta] = useState('Ahorros');
-  const [saldoDisplay, setSaldoDisplay] = useState(''); // Estado formateado con puntos (ej: 80.000)
+  const [saldoDisplay, setSaldoDisplay] = useState('');
 
   const cargarCuentas = async () => {
     try {
@@ -32,9 +35,8 @@ export function AccountsManager({ usuario }) {
     cargarCuentas();
   }, [usuario.id]);
 
-  // Manejador del campo de saldo con enmascaramiento de puntos
   const handleSaldoChange = (e) => {
-    const rawValue = e.target.value.replace(/\D/g, ''); // Filtrar solo dígitos
+    const rawValue = e.target.value.replace(/\D/g, '');
     if (!rawValue) {
       setSaldoDisplay('');
       return;
@@ -47,7 +49,6 @@ export function AccountsManager({ usuario }) {
     e.preventDefault();
     if (!nombreCuenta.trim() || !saldoDisplay) return;
 
-    // Convertir de formato con puntos (80.000) a número entero/flotante real (80000)
     const saldoNumerico = parseFloat(saldoDisplay.replace(/\./g, ''));
 
     try {
@@ -66,22 +67,6 @@ export function AccountsManager({ usuario }) {
       cargarCuentas();
     } catch {
       setError('Ocurrió un error al registrar la cuenta bancaria.');
-    }
-  };
-
-  // Manejador para eliminar una cuenta bancaria
-  const handleEliminarCuenta = async (id, nombre) => {
-    const confirmar = window.confirm(
-      `¿Estás seguro de que deseas eliminar la cuenta "${nombre}"? Se eliminarán también las transacciones vinculadas a esta cuenta.`
-    );
-    if (!confirmar) return;
-
-    try {
-      setError('');
-      await api.delete(`/cuentas/${id}/`);
-      cargarCuentas(); // Recargar la lista de cuentas
-    } catch {
-      setError('Ocurrió un error al intentar eliminar la cuenta.');
     }
   };
 
@@ -109,7 +94,14 @@ export function AccountsManager({ usuario }) {
       ) : (
         <div style={styles.grid}>
           {cuentas.map((cuenta) => (
-            <div key={cuenta.id} style={styles.accountCard}>
+            <div
+              key={cuenta.id}
+              style={{ ...styles.accountCard, cursor: 'pointer' }}
+              onClick={() => {
+                setSelectedCuentaModal(cuenta);
+                setShowDetailModal(true);
+              }}
+            >
               <div style={styles.cardHeader}>
                 <div style={styles.iconBadge}>
                   {cuenta.tipo === 'Billetera Digital' ? (
@@ -120,16 +112,7 @@ export function AccountsManager({ usuario }) {
                     <Building2 size={24} color="#3b82f6" />
                   )}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span style={styles.typeBadge}>{cuenta.tipo}</span>
-                  <button
-                    onClick={() => handleEliminarCuenta(cuenta.id, cuenta.nombre)}
-                    style={styles.deleteAccountBtn}
-                    title="Eliminar cuenta"
-                  >
-                    <Trash2 size={16} color="#ef4444" />
-                  </button>
-                </div>
+                <span style={styles.typeBadge}>{cuenta.tipo}</span>
               </div>
               <h3 style={styles.accountName}>{cuenta.nombre}</h3>
               <p style={styles.balanceLabel}>Saldo Disponible</p>
@@ -155,7 +138,7 @@ export function AccountsManager({ usuario }) {
         onDataChanged={cargarCuentas}
       />
 
-      {/* Modal de Registro de Cuenta */}
+      {/* Modal de Registro de Cuenta Nueva */}
       {showModal && (
         <div style={styles.modalOverlay}>
           <div style={styles.modalCard}>
@@ -217,6 +200,15 @@ export function AccountsManager({ usuario }) {
           </div>
         </div>
       )}
+
+      {/* Modal de Gestión Integral de Cuenta y Presupuestos */}
+      <AccountDetailModal
+        cuenta={selectedCuentaModal}
+        isOpen={showDetailModal}
+        onClose={() => setShowDetailModal(false)}
+        onAccountUpdated={cargarCuentas}
+        onAccountDeleted={cargarCuentas}
+      />
     </div>
   );
 }
@@ -275,15 +267,6 @@ const styles = {
     color: '#cbd5e1',
     padding: '0.2rem 0.6rem',
     borderRadius: '1rem',
-  },
-  deleteAccountBtn: {
-    backgroundColor: 'transparent',
-    border: 'none',
-    cursor: 'pointer',
-    padding: '0.2rem',
-    display: 'flex',
-    alignItems: 'center',
-    borderRadius: '0.3rem',
   },
   accountName: {
     fontSize: '1.2rem',

@@ -2,8 +2,10 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
+from django.db import transaction
 from .models import CuentaBancaria
 from .serializers import CuentaBancariaSerializer
+from transacciones.models import Transaccion
 
 class ListaCuentasView(APIView):
     """Listar todas las cuentas bancarias registradas."""
@@ -22,13 +24,25 @@ class RegistroCuentaView(APIView):
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class DetalleCuentaBancariaView(APIView):
-    """Endpoint para obtener, actualizar o eliminar una cuenta bancaria especifica."""
+    """Endpoint para obtener, actualizar o eliminar una cuenta bancaria específica."""
+
+    def get(self, request, pk):
+        cuenta = get_object_or_404(CuentaBancaria, pk=pk)
+        serializer = CuentaBancariaSerializer(cuenta)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def put(self, request, pk):
+        cuenta = get_object_or_404(CuentaBancaria, pk=pk)
+        serializer = CuentaBancariaSerializer(cuenta, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
     def delete(self, request, pk):
         cuenta = get_object_or_404(CuentaBancaria, pk=pk)
         
         with transaction.atomic():
-            # Eliminamos las transacciones asociadas a esta cuenta para no dejar huerfanos los registros
             Transaccion.objects.filter(cuenta=cuenta).delete()
             cuenta.delete()
 
