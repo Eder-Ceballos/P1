@@ -1,13 +1,18 @@
 import React from 'react';
-import { Home, BarChart3, Bot, LogOut, X } from 'lucide-react';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { Home, BarChart3, Repeat, Bot, LogOut, X } from 'lucide-react';
 
-export function Sidebar({ activeView, setActiveView, isOpen, setIsOpen, usuario, onLogout }) {
+export function Sidebar({ isOpen, setIsOpen, usuario, onLogout }) {
+  const navigate = useNavigate();
+  const location = useLocation();
+
   if (!isOpen) return null;
 
   const navItems = [
-    { id: 'dashboard', label: 'Inicio / Cuentas', icon: Home },
-    { id: 'analytics', label: 'Reportes y Estadísticas', icon: BarChart3 },
-    { id: 'ai-assistant', label: 'Asistente IA (Próximamente)', icon: Bot, disabled: true },
+    { path: '/dashboard', label: 'Inicio / Cuentas', icon: Home },
+    { path: '/suscripciones', label: 'Suscripciones Recurrentes', icon: Repeat },
+    { path: '/analytics', label: 'Reportes y Estadísticas', icon: BarChart3 },
+    { path: '/ai-assistant', label: 'Asistente IA (Próximamente)', icon: Bot, disabled: true },
   ];
 
   return (
@@ -23,14 +28,14 @@ export function Sidebar({ activeView, setActiveView, isOpen, setIsOpen, usuario,
         <nav style={styles.nav}>
           {navItems.map((item) => {
             const Icon = item.icon;
-            const isActive = activeView === item.id;
+            const isActive = location.pathname === item.path;
             return (
               <button
-                key={item.id}
+                key={item.path}
                 disabled={item.disabled}
                 onClick={() => {
                   if (!item.disabled) {
-                    setActiveView(item.id);
+                    navigate(item.path);
                     setIsOpen(false);
                   }
                 }}
@@ -59,89 +64,16 @@ export function Sidebar({ activeView, setActiveView, isOpen, setIsOpen, usuario,
 }
 
 const styles = {
-  overlay: {
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    width: '100vw',
-    height: '100vh',
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    zIndex: 2000,
-  },
-  sidebar: {
-    width: '260px',
-    height: '100%',
-    backgroundColor: '#1e293b',
-    borderRight: '1px solid #334155',
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'space-between',
-    padding: '1.5rem',
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: '2rem',
-  },
-  brand: {
-    fontSize: '1.2rem',
-    fontWeight: 'bold',
-    color: '#8b5cf6',
-  },
-  closeBtn: {
-    backgroundColor: 'transparent',
-    border: 'none',
-    cursor: 'pointer',
-  },
-  nav: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: '0.5rem',
-    flex: 1,
-  },
-  navItem: {
-    display: 'flex',
-    alignItems: 'center',
-    padding: '0.75rem 1rem',
-    borderRadius: '0.5rem',
-    backgroundColor: 'transparent',
-    color: '#cbd5e1',
-    border: 'none',
-    cursor: 'pointer',
-    textAlign: 'left',
-    fontSize: '0.9rem',
-    fontWeight: '500',
-  },
-  activeNavItem: {
-    backgroundColor: '#8b5cf6',
-    color: '#ffffff',
-    fontWeight: 'bold',
-  },
-  disabledNavItem: {
-    color: '#64748b',
-    cursor: 'not-allowed',
-  },
-  footer: {
-    borderTop: '1px solid #334155',
-    paddingTop: '1rem',
-  },
-  userText: {
-    fontSize: '0.85rem',
-    color: '#94a3b8',
-    marginBottom: '0.5rem',
-  },
-  logoutBtn: {
-    display: 'flex',
-    alignItems: 'center',
-    width: '100%',
-    padding: '0.6rem',
-    backgroundColor: '#ef4444',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '0.5rem',
-    cursor: 'pointer',
-    fontSize: '0.85rem',
-    fontWeight: 'bold',
-  },
+  overlay: { position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', backgroundColor: 'rgba(0,0,0,0.6)', zIndex: 2000 },
+  sidebar: { width: '260px', height: '100%', backgroundColor: '#1e293b', borderRight: '1px solid #334155', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', padding: '1.5rem' },
+  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' },
+  brand: { fontSize: '1.2rem', fontWeight: 'bold', color: '#8b5cf6' },
+  closeBtn: { backgroundColor: 'transparent', border: 'none', cursor: 'pointer' },
+  nav: { display: 'flex', flexDirection: 'column', gap: '0.5rem', flex: 1 },
+  navItem: { display: 'flex', alignItems: 'center', padding: '0.75rem 1rem', borderRadius: '0.5rem', backgroundColor: 'transparent', color: '#cbd5e1', border: 'none', cursor: 'pointer', textAlign: 'left', fontSize: '0.9rem', fontWeight: '500' },
+  activeNavItem: { backgroundColor: '#8b5cf6', color: '#ffffff', fontWeight: 'bold' },
+  disabledNavItem: { color: '#64748b', cursor: 'not-allowed' },
+  footer: { borderTop: '1px solid #334155', paddingTop: '1rem' },
+  userText: { fontSize: '0.85rem', color: '#94a3b8', marginBottom: '0.5rem' },
+  logoutBtn: { display: 'flex', alignItems: 'center', width: '100%', padding: '0.6rem', backgroundColor: '#ef4444', color: '#fff', border: 'none', borderRadius: '0.5rem', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 'bold' },
 };

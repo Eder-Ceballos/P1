@@ -19,3 +19,20 @@ class CuentaBancaria(models.Model):
 
     def __str__(self):
         return f"{self.nombre} - {self.usuario.nombre}"
+
+class Suscripcion(models.Model):
+    FRECUENCIA_CHOICES = [
+        ('Mensual', 'Mensual'),
+        ('Anual', 'Anual'),
+    ]
+
+    usuario = models.ForeignKey(Usuario, on_delete=models.CASCADE, related_name='suscripciones')
+    cuenta = models.ForeignKey(CuentaBancaria, on_delete=models.CASCADE, related_name='suscripciones')
+    nombre = models.CharField(max_length=100) # ej: "Netflix", "Software X"
+    servicio_preset = models.CharField(max_length=50, default='otro') # ej: 'netflix', 'spotify', 'otro'
+    monto = models.DecimalField(max_digits=12, decimal_places=2)
+    frecuencia = models.CharField(max_length=20, choices=FRECUENCIA_CHOICES, default='Mensual')
+    fecha_proximo_pago = models.DateField()
+
+    def __str__(self):
+        return f"{self.nombre} (${self.monto}) - {self.cuenta.nombre}"
