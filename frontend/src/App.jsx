@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, Navigate, useNavigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import api from './api';
 import { UserSelection } from './components/UserSelection';
 import { AccountsManager } from './components/AccountsManager';
@@ -14,7 +14,9 @@ export default function App() {
   const [cuentas, setCuentas] = useState([]);
   const [suscripciones, setSuscripciones] = useState([]);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const sesionGuardada = localStorage.getItem('usuario_activo');
@@ -28,15 +30,15 @@ export default function App() {
     if (usuario?.id) {
       const cargarDatosGlobales = async () => {
         try {
-          // 1. Ejecutar auto-débitos pendientes si los hay
+          // 1. Ejecutar auto-débitos pendientes
           await api.post('/suscripciones/procesar-autodebitos/', { usuario: usuario.id });
 
-          // 2. Cargar cuentas actualizadas con los nuevos saldos
+          // 2. Cargar cuentas actualizadas
           const resCuentas = await api.get('/cuentas/');
           const uCuentas = resCuentas.data.filter((c) => c.usuario === usuario.id);
           setCuentas(uCuentas);
 
-          // 3. Cargar suscripciones actualizadas con sus nuevas fechas
+          // 3. Cargar suscripciones actualizadas
           const resSubs = await api.get(`/suscripciones/?usuario=${usuario.id}`);
           setSuscripciones(resSubs.data);
         } catch {
@@ -57,6 +59,22 @@ export default function App() {
     localStorage.removeItem('usuario_activo');
     setUsuario(null);
     navigate('/login');
+  };
+
+  // Título dinámico para la cabecera
+  const getPageTitle = (path) => {
+    switch (path) {
+      case '/dashboard':
+        return 'Inicio / Mis Cuentas';
+      case '/suscripciones':
+        return 'Gestión de Suscripciones';
+      case '/analytics':
+        return 'Reportes y Estadísticas';
+      case '/asistente':
+        return 'Asistente IA';
+      default:
+        return 'Panel Financiero';
+    }
   };
 
   if (!usuario) {
@@ -83,7 +101,7 @@ export default function App() {
           <button style={styles.menuBtn} onClick={() => setSidebarOpen(true)}>
             <Menu size={22} color="#f8fafc" />
           </button>
-          <h1 style={styles.title}>Panel Financiero</h1>
+          <h1 style={styles.title}>{getPageTitle(location.pathname)}</h1>
         </div>
 
         <div style={styles.userSection}>
@@ -106,6 +124,7 @@ export default function App() {
             element={
               <AnalyticsDashboard
                 usuario={usuario}
+                cuentas={cuentas}
                 onBackToMain={() => navigate('/dashboard')}
               />
             }
@@ -143,7 +162,7 @@ const styles = {
     display: 'flex',
     alignItems: 'center',
   },
-  title: { fontSize: '1.3rem', fontWeight: 'bold' },
+  title: { fontSize: '1.3rem', fontWeight: 'bold', margin: 0 },
   userSection: { display: 'flex', alignItems: 'center', gap: '1rem' },
   userName: { fontSize: '0.95rem', color: '#cbd5e1' },
   logoutButton: {

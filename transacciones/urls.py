@@ -1,18 +1,17 @@
 from django.urls import path
 from .views import (
-    HistorialTransaccionesView, 
-    RegistroTransaccionView, 
-    DetalleTransaccionView, 
-    RegistrarUsuarioView,
-    LoginUsuarioView,
-    ReporteFinancieroView
+    ListaTransaccionesView,
+    DetalleTransaccionView,
+    ReporteFinancieroView,
+    TransferenciaEntreCuentasView,
+    LoginUsuarioView
 )
 
 urlpatterns = [
-    path('transacciones/', HistorialTransaccionesView.as_view(), name='historial_transacciones'),
-    path('transacciones/registrar/', RegistroTransaccionView.as_view(), name='registrar_transaccion'),
+    path('transacciones/', ListaTransaccionesView.as_view(), name='lista_transacciones'),
+    path('transacciones/registrar/', ListaTransaccionesView.as_view(), name='registrar_transaccion'),
     path('transacciones/<int:pk>/', DetalleTransaccionView.as_view(), name='detalle_transaccion'),
-    path('transacciones/registrar-usuario/', RegistrarUsuarioView.as_view(), name='registrar_usuario'),
+    path('transacciones/reporte/', ReporteFinancieroView.as_view(), name='reporte_financiero'),
+    path('transacciones/transferir/', TransferenciaEntreCuentasView.as_view(), name='transferir_saldo'),
     path('transacciones/login-usuario/', LoginUsuarioView.as_view(), name='login_usuario'),
-    path('transacciones/reporte-analitico/', ReporteFinancieroView.as_view(), name='reporte_analitico'),
 ]
