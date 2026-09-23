@@ -6,6 +6,7 @@ from django.db import transaction
 from .models import CuentaBancaria, Suscripcion
 from .serializers import CuentaBancariaSerializer, SuscripcionSerializer
 from transacciones.models import Transaccion
+from .services import procesar_autodebitos_suscripciones
 
 class ListaCuentasView(APIView):
     """Endpoint para obtener todas las cuentas bancarias."""
@@ -96,3 +97,16 @@ class DetalleSuscripcionView(APIView):
         suscripcion = get_object_or_404(Suscripcion, pk=pk)
         suscripcion.delete()
         return Response({'mensaje': 'Suscripción eliminada correctamente'}, status=status.HTTP_204_NO_CONTENT)
+
+class ProcesarAutoDebitosView(APIView):
+    """Endpoint para verificar y procesar automáticamente los cobros de suscripciones del día."""
+    def post(self, request):
+        usuario_id = request.data.get('usuario')
+        if not usuario_id:
+            return Response({'error': 'El parámetro usuario es requerido'}, status=status.HTTP_400_BAD_REQUEST)
+
+        procesadas = procesar_autodebitos_suscripciones(usuario_id=usuario_id)
+        return Response({
+            'mensaje': f"Se procesaron {len(procesadas)} cobros de suscripciones automáticos.",
+            'detalles': procesadas
+        }, status=status.HTTP_200_OK)

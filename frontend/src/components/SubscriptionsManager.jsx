@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import api from '../api';
-import { PlusCircle, Trash2, Calendar, Filter, Repeat, AlertCircle, Wallet } from 'lucide-react';
+import { PlusCircle, Trash2, Calendar, Filter, Repeat, AlertCircle, Wallet, Edit2 } from 'lucide-react';
 
-// Catálogo Predeterminado con los 25 Servicios Famosos + Opción Personalizada
 export const SERVICES_CATALOG = [
   { id: 'netflix', name: 'Netflix', color: '#E50914' },
   { id: 'spotify', name: 'Spotify', color: '#1DB954' },
@@ -37,22 +36,22 @@ export function SubscriptionsManager({ usuario, cuentas }) {
   const [selectedCuentaFilter, setSelectedCuentaFilter] = useState('');
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [editingSubId, setEditingSubId] = useState(null); // ID de la suscripción a editar
   const [error, setError] = useState('');
 
   // Formulario
   const [presetId, setPresetId] = useState('netflix');
   const [nombrePersonalizado, setNombrePersonalizado] = useState('Netflix');
   const [cuentaId, setCuentaId] = useState('');
+  const [montoDisplay, setMontoDisplay] = useState('');
+  const [frecuencia, setFrecuencia] = useState('Mensual');
+  const [fechaPago, setFechaPago] = useState('');
 
-  // Actualizar cuenta por defecto al abrir modal si hay cuentas
   useEffect(() => {
     if (cuentas && cuentas.length > 0 && !cuentaId) {
       setCuentaId(cuentas[0].id);
     }
   }, [cuentas, cuentaId]);
-  const [montoDisplay, setMontoDisplay] = useState('');
-  const [frecuencia, setFrecuencia] = useState('Mensual');
-  const [fechaPago, setFechaPago] = useState('');
 
   const cargarSuscripciones = async () => {
     try {
@@ -74,7 +73,30 @@ export function SubscriptionsManager({ usuario, cuentas }) {
     cargarSuscripciones();
   }, [usuario.id, selectedCuentaFilter]);
 
-  // Sincronizar selección del catálogo
+  const abrirModalNuevo = () => {
+    setEditingSubId(null);
+    setPresetId('netflix');
+    setNombrePersonalizado('Netflix');
+    setCuentaId(cuentas[0]?.id || '');
+    setMontoDisplay('');
+    setFrecuencia('Mensual');
+    setFechaPago('');
+    setError('');
+    setShowModal(true);
+  };
+
+  const abrirModalEditar = (sub) => {
+    setEditingSubId(sub.id);
+    setPresetId(sub.servicio_preset || 'otro');
+    setNombrePersonalizado(sub.nombre);
+    setCuentaId(sub.cuenta);
+    setMontoDisplay(Math.round(parseFloat(sub.monto)).toLocaleString('es-CO'));
+    setFrecuencia(sub.frecuencia);
+    setFechaPago(sub.fecha_proximo_pago);
+    setError('');
+    setShowModal(true);
+  };
+
   const handlePresetSelect = (id) => {
     setPresetId(id);
     const item = SERVICES_CATALOG.find((s) => s.id === id);
@@ -95,27 +117,31 @@ export function SubscriptionsManager({ usuario, cuentas }) {
     setMontoDisplay(formatted);
   };
 
-  const handleCrearSuscripcion = async (e) => {
+  const handleGuardarSuscripcion = async (e) => {
     e.preventDefault();
     if (!nombrePersonalizado.trim() || !montoDisplay || !cuentaId || !fechaPago) return;
 
     const montoNumerico = parseFloat(montoDisplay.replace(/\./g, ''));
 
+    const payload = {
+      usuario: usuario.id,
+      cuenta: parseInt(cuentaId),
+      nombre: nombrePersonalizado.trim(),
+      servicio_preset: presetId,
+      monto: montoNumerico,
+      frecuencia: frecuencia,
+      fecha_proximo_pago: fechaPago,
+    };
+
     try {
       setError('');
-      await api.post('/suscripciones/', {
-        usuario: usuario.id,
-        cuenta: parseInt(cuentaId),
-        nombre: nombrePersonalizado.trim(),
-        servicio_preset: presetId,
-        monto: montoNumerico,
-        frecuencia: frecuencia,
-        fecha_proximo_pago: fechaPago,
-      });
+      if (editingSubId) {
+        await api.put(`/suscripciones/${editingSubId}/`, payload);
+      } else {
+        await api.post('/suscripciones/', payload);
+      }
 
       setShowModal(false);
-      setMontoDisplay('');
-      setFechaPago('');
       cargarSuscripciones();
     } catch {
       setError('Ocurrió un error al guardar la suscripción.');
@@ -134,7 +160,6 @@ export function SubscriptionsManager({ usuario, cuentas }) {
     }
   };
 
-  // Cálculo del gasto mensual total
   const gastoMensualTotal = suscripciones.reduce((acc, s) => {
     const monto = parseFloat(s.monto);
     return acc + (s.frecuencia === 'Anual' ? monto / 12 : monto);
@@ -142,19 +167,17 @@ export function SubscriptionsManager({ usuario, cuentas }) {
 
   return (
     <div style={styles.container}>
-      {/* Encabezado y resumen */}
       <div style={styles.headerRow}>
         <div>
           <h2 style={{ margin: 0, fontSize: '1.4rem' }}>Gestión de Suscripciones Recurrentes</h2>
           <p style={styles.subtitle}>Monitorea tus servicios de pago automático mensual o anual.</p>
         </div>
 
-        <button style={styles.addBtn} onClick={() => setShowModal(true)}>
+        <button style={styles.addBtn} onClick={abrirModalNuevo}>
           <PlusCircle size={18} style={{ marginRight: '6px' }} /> Nueva Suscripción
         </button>
       </div>
 
-      {/* Tarjeta de Resumen y Filtro por Cuenta */}
       <div style={styles.summaryBar}>
         <div style={styles.totalBox}>
           <Repeat color="#8b5cf6" size={24} />
@@ -183,7 +206,6 @@ export function SubscriptionsManager({ usuario, cuentas }) {
         </div>
       </div>
 
-      {/* Grilla de Suscripciones */}
       {loading ? (
         <p style={styles.loadingText}>Cargando suscripciones...</p>
       ) : suscripciones.length === 0 ? (
@@ -204,13 +226,22 @@ export function SubscriptionsManager({ usuario, cuentas }) {
               <div key={sub.id} style={{ ...styles.card, borderLeft: `5px solid ${presetInfo.color}` }}>
                 <div style={styles.cardTop}>
                   <h3 style={styles.cardTitle}>{sub.nombre}</h3>
-                  <button
-                    onClick={() => handleEliminarSuscripcion(sub.id, sub.nombre)}
-                    style={styles.deleteBtn}
-                    title="Eliminar suscripción"
-                  >
-                    <Trash2 size={16} color="#ef4444" />
-                  </button>
+                  <div style={{ display: 'flex', gap: '0.4rem' }}>
+                    <button
+                      onClick={() => abrirModalEditar(sub)}
+                      style={styles.iconBtn}
+                      title="Editar suscripción"
+                    >
+                      <Edit2 size={16} color="#38bdf8" />
+                    </button>
+                    <button
+                      onClick={() => handleEliminarSuscripcion(sub.id, sub.nombre)}
+                      style={styles.iconBtn}
+                      title="Eliminar suscripción"
+                    >
+                      <Trash2 size={16} color="#ef4444" />
+                    </button>
+                  </div>
                 </div>
 
                 <p style={styles.cardMonto}>
@@ -235,15 +266,18 @@ export function SubscriptionsManager({ usuario, cuentas }) {
         </div>
       )}
 
-      {/* Modal de Registro de Suscripción */}
       {showModal && (
         <div style={styles.overlay} onClick={() => setShowModal(false)}>
           <div style={styles.modalCard} onClick={(e) => e.stopPropagation()}>
-            <h3 style={{ margin: '0 0 0.4rem 0' }}>Registrar Nueva Suscripción</h3>
-            <p style={styles.subtitle}>Elige una de las plataformas populares o ingresa una personalizada.</p>
+            <h3 style={{ margin: '0 0 0.4rem 0' }}>
+              {editingSubId ? 'Editar Suscripción' : 'Registrar Nueva Suscripción'}
+            </h3>
+            <p style={styles.subtitle}>
+              {editingSubId ? 'Actualiza los datos de cobro.' : 'Elige una plataforma o ingresa una personalizada.'}
+            </p>
 
-            <form onSubmit={handleCrearSuscripcion} style={styles.form}>
-              <label style={styles.label}>Seleccionar Servicio:</label>
+            <form onSubmit={handleGuardarSuscripcion} style={styles.form}>
+              <label style={styles.label}>Servicio / Plataforma:</label>
               <select
                 value={presetId}
                 onChange={(e) => handlePresetSelect(e.target.value)}
@@ -258,7 +292,7 @@ export function SubscriptionsManager({ usuario, cuentas }) {
 
               {presetId === 'otro' && (
                 <>
-                  <label style={styles.label}>Nombre de la Suscripción Personalizada:</label>
+                  <label style={styles.label}>Nombre de la Suscripción:</label>
                   <input
                     type="text"
                     placeholder="Ej: Servidor VPS, Licencia Software"
@@ -334,7 +368,7 @@ export function SubscriptionsManager({ usuario, cuentas }) {
                   Cancelar
                 </button>
                 <button type="submit" style={styles.saveBtn}>
-                  Guardar Suscripción
+                  {editingSubId ? 'Guardar Cambios' : 'Guardar Suscripción'}
                 </button>
               </div>
             </form>
@@ -409,7 +443,7 @@ const styles = {
   },
   cardTop: { display: 'flex', justifyContent: 'space-between', alignItems: 'center' },
   cardTitle: { fontSize: '1.1rem', fontWeight: 'bold', margin: 0 },
-  deleteBtn: { backgroundColor: 'transparent', border: 'none', cursor: 'pointer', padding: '0.2rem' },
+  iconBtn: { backgroundColor: 'transparent', border: 'none', cursor: 'pointer', padding: '0.2rem' },
   cardMonto: { fontSize: '1.3rem', fontWeight: 'bold', color: '#38bdf8', margin: '0.6rem 0' },
   freqText: { fontSize: '0.8rem', color: '#94a3b8', fontWeight: 'normal' },
   cardFooter: { display: 'flex', justifyContent: 'space-between', marginTop: '0.8rem', borderTop: '1px solid #334155', paddingTop: '0.6rem' },

@@ -28,10 +28,15 @@ export default function App() {
     if (usuario?.id) {
       const cargarDatosGlobales = async () => {
         try {
+          // 1. Ejecutar auto-débitos pendientes si los hay
+          await api.post('/suscripciones/procesar-autodebitos/', { usuario: usuario.id });
+
+          // 2. Cargar cuentas actualizadas con los nuevos saldos
           const resCuentas = await api.get('/cuentas/');
           const uCuentas = resCuentas.data.filter((c) => c.usuario === usuario.id);
           setCuentas(uCuentas);
 
+          // 3. Cargar suscripciones actualizadas con sus nuevas fechas
           const resSubs = await api.get(`/suscripciones/?usuario=${usuario.id}`);
           setSuscripciones(resSubs.data);
         } catch {
