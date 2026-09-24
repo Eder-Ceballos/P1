@@ -26,7 +26,10 @@ export default function App() {
     }
   }, []);
 
-  // Cargar cuentas y suscripciones globales del usuario para alertas y presupuestos
+  // Cargar cuentas y suscripciones globales del usuario para alertas y presupuestos.
+  // Se recarga también al cambiar de sección (location.pathname) para que una cuenta
+  // creada en el Dashboard aparezca de inmediato en Suscripciones y Metas, que reciben
+  // esta lista por props en vez de cargarla ellos mismos.
   useEffect(() => {
     if (usuario?.id) {
       const cargarDatosGlobales = async () => {
@@ -48,7 +51,7 @@ export default function App() {
       };
       cargarDatosGlobales();
     }
-  }, [usuario?.id]);
+  }, [usuario?.id, location.pathname]);
 
   const handleUserSelect = (user) => {
     setUsuario(user);
