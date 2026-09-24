@@ -4,7 +4,9 @@ from rest_framework import status
 from django.shortcuts import get_object_or_404
 from django.db import transaction
 from .models import CuentaBancaria, Suscripcion
+from .models import MetaAhorro
 from .serializers import CuentaBancariaSerializer, SuscripcionSerializer
+from .serializers import MetaAhorroSerializer
 from transacciones.models import Transaccion
 from .services import procesar_autodebitos_suscripciones
 
@@ -110,3 +112,66 @@ class ProcesarAutoDebitosView(APIView):
             'mensaje': f"Se procesaron {len(procesadas)} cobros de suscripciones automáticos.",
             'detalles': procesadas
         }, status=status.HTTP_200_OK)
+
+class ListaMetasAhorroView(APIView):
+    """Listar todas las metas del usuario o crear una nueva."""
+
+    def get(self, request):
+        usuario_id = request.query_params.get('usuario')
+        if not usuario_id:
+            return Response({'error': 'El parámetro usuario es requerido.'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        metas = MetaAhorro.objects.filter(usuario_id=usuario_id).order_by('-fecha_creacion')
+        serializer = MetaAhorroSerializer(metas, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    def post(self, request):
+        serializer = MetaAhorroSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AbonarMetaAhorroView(APIView):
+    """Abonar o liberar saldo de una meta de ahorro asegurando que no supere el saldo libre."""
+
+    def post(self, request, pk):
+        try:
+            meta = MetaAhorro.objects.get(pk=pk)
+        except MetaAhorro.DoesNotExist:
+            return Response({'error': 'Meta de ahorro no encontrada.'}, status=status.HTTP_404_NOT_FOUND)
+
+        monto = float(request.data.get('monto', 0))
+        accion = request.data.get('accion', 'abonar') # 'abonar' o 'liberar'
+
+        if monto <= 0:
+            return Response({'error': 'El monto debe ser mayor a cero.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        with transaction.atomic():
+            cuenta = meta.cuenta
+            saldo_real = float(cuenta.saldo)
+            
+            # Suma de lo abonado en todas las metas de esta cuenta
+            reservado_actual = float(sum(m.monto_actual for m in cuenta.metas_ahorro.all()))
+            disponible_actual = saldo_real - reservado_actual
+
+            if accion == 'abonar':
+                if monto > disponible_actual:
+                    return Response({
+                        'error': f'No tienes suficiente saldo libre en {cuenta.nombre}. Disponible: ${disponible_actual:.2f}'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                
+                meta.monto_actual = float(meta.monto_actual) + monto
+
+            elif accion == 'liberar':
+                if monto > float(meta.monto_actual):
+                    return Response({
+                        'error': f'No puedes liberar más dinero del abonado en esta meta. Abonado actual: ${meta.monto_actual:.2f}'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                
+                meta.monto_actual = float(meta.monto_actual) - monto
+
+            meta.save()
+
+        return Response(MetaAhorroSerializer(meta).data, status=status.HTTP_200_OK)

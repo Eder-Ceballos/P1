@@ -5,7 +5,9 @@ from .views import (
     DetalleCuentaBancariaView,
     ListaSuscripcionesView,
     DetalleSuscripcionView,
-    ProcesarAutoDebitosView
+    ProcesarAutoDebitosView,
+    ListaMetasAhorroView,
+    AbonarMetaAhorroView
 )
 
 urlpatterns = [
@@ -16,4 +18,9 @@ urlpatterns = [
     path('suscripciones/', ListaSuscripcionesView.as_view(), name='lista_suscripciones'),
     path('suscripciones/<int:pk>/', DetalleSuscripcionView.as_view(), name='detalle_suscripcion'),
     path('suscripciones/procesar-autodebitos/', ProcesarAutoDebitosView.as_view(), name='procesar_autodebitos'),
+
+    # Rutas para Metas de Ahorro
+    path('metas/', ListaMetasAhorroView.as_view(), name='lista_metas'),
+    path('metas/<int:pk>/abonar/', AbonarMetaAhorroView.as_view(), name='abonar_meta'),
 ]
+

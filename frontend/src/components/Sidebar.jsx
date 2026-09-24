@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { calcularDiasRestantes } from './NotificationToast';
-import { Home, BarChart3, Repeat, Bot, LogOut, X } from 'lucide-react';
+import { Home, BarChart3, Repeat, Bot, Target, LogOut, X } from 'lucide-react';
 
 export function Sidebar({ isOpen, setIsOpen, usuario, onLogout, suscripciones = [] }) {
   const navigate = useNavigate();
@@ -25,9 +25,10 @@ export function Sidebar({ isOpen, setIsOpen, usuario, onLogout, suscripciones = 
       label: 'Suscripciones Recurrentes',
       icon: Repeat,
       badge: cantidadProximas > 0 ? cantidadProximas : null,
-      badgeColor: esUrgente ? '#ef4444' : '#f59e0b', // Rojo o Naranja
+      badgeColor: esUrgente ? '#ef4444' : '#f59e0b',
     },
     { path: '/analytics', label: 'Reportes y Estadísticas', icon: BarChart3 },
+    { path: '/metas', label: 'Metas de Ahorro', icon: Target },
     { path: '/ai-assistant', label: 'Asistente IA (Próximamente)', icon: Bot, disabled: true },
   ];
 

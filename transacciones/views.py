@@ -10,7 +10,7 @@ from .services import TransaccionService
 from django.contrib.auth.models import User
 
 class ListaTransaccionesView(APIView):
-    """Endpoint para listar y registrar transacciones individuales."""
+    """Obtener historial de transacciones (por usuario o cuenta) o registrar una nueva."""
 
     def get(self, request):
         usuario_id = request.query_params.get('usuario')
@@ -26,28 +26,63 @@ class ListaTransaccionesView(APIView):
         if tipo:
             transacciones = transacciones.filter(tipo=tipo)
 
+        if not usuario_id and not cuenta_id:
+            return Response({'error': 'Se requiere al menos el parámetro usuario o cuenta'}, status=status.HTTP_400_BAD_REQUEST)
+
         transacciones = transacciones.order_by('-fecha')
         serializer = TransaccionSerializer(transacciones, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        serializer = TransaccionSerializer(data=request.data)
-        if serializer.is_valid():
-            with transaction.atomic():
-                transaccion = serializer.save()
-                cuenta = transaccion.cuenta
-                
-                # Actualizar saldo de acuerdo al movimiento
-                if transaccion.tipo == 'ingreso':
-                    cuenta.saldo = float(cuenta.saldo) + float(transaccion.monto)
-                elif transaccion.tipo == 'gasto':
-                    cuenta.saldo = float(cuenta.saldo) - float(transaccion.monto)
-                
+        tipo = request.data.get('tipo')
+        usuario_id = request.data.get('usuario')
+        cuenta_id = request.data.get('cuenta')
+        monto = request.data.get('monto')
+        descripcion = request.data.get('descripcion', '')
+
+        if not usuario_id or not cuenta_id or not monto:
+            return Response({'error': 'Los campos usuario, cuenta y monto son requeridos.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        usuario = get_object_or_404(User, pk=usuario_id)
+
+        if tipo == 'gasto':
+            try:
+                transaccion_obj, alerta_meta = TransaccionService.registrar_gasto_con_proteccion_meta(
+                    usuario=usuario,
+                    cuenta_id=cuenta_id,
+                    monto=monto,
+                    descripcion=descripcion
+                )
+                serializer = TransaccionSerializer(transaccion_obj)
+                data = serializer.data
+                if alerta_meta:
+                    data['alerta_meta'] = alerta_meta
+                return Response(data, status=status.HTTP_201_CREATED)
+            except ValueError as e:
+                return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            except Exception as e:
+                return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # Registro de Ingresos
+        elif tipo == 'ingreso':
+            try:
+                cuenta = get_object_or_404(CuentaBancaria, pk=cuenta_id)
+                transaccion_obj = Transaccion.objects.create(
+                    usuario=usuario,
+                    cuenta=cuenta,
+                    monto=monto,
+                    tipo='ingreso',
+                    descripcion=descripcion
+                )
+                cuenta.saldo = float(cuenta.saldo) + float(monto)
                 cuenta.save()
+                
+                serializer = TransaccionSerializer(transaccion_obj)
+                return Response(serializer.data, status=status.HTTP_201_CREATED)
+            except Exception as e:
+                return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
+        return Response({'error': 'Tipo de transacción no válido.'}, status=status.HTTP_400_BAD_REQUEST)
 
 class DetalleTransaccionView(APIView):
     """Endpoint para obtener o eliminar una transacción específica."""

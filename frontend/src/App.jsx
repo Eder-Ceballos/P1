@@ -5,6 +5,7 @@ import { UserSelection } from './components/UserSelection';
 import { AccountsManager } from './components/AccountsManager';
 import { AnalyticsDashboard } from './components/AnalyticsDashboard';
 import { SubscriptionsManager } from './components/SubscriptionsManager';
+import { GoalsManager } from './components/GoalsManager';
 import { Sidebar } from './components/Sidebar';
 import { NotificationToast } from './components/NotificationToast';
 import { Menu, LogOut } from 'lucide-react';
@@ -70,6 +71,8 @@ export default function App() {
         return 'Gestión de Suscripciones';
       case '/analytics':
         return 'Reportes y Estadísticas';
+      case '/metas':
+        return 'Metas Financieras de Ahorro';
       case '/asistente':
         return 'Asistente IA';
       default:
@@ -126,6 +129,22 @@ export default function App() {
                 usuario={usuario}
                 cuentas={cuentas}
                 onBackToMain={() => navigate('/dashboard')}
+              />
+            }
+          />
+          <Route
+            path="/metas"
+            element={
+              <GoalsManager
+                usuario={usuario}
+                cuentas={cuentas}
+                onRefreshData={() => {
+                  // Re-cargar cuentas para refrescar el saldo disponible
+                  api.get('/cuentas/').then((res) => {
+                    const uCuentas = res.data.filter((c) => c.usuario === usuario.id);
+                    setCuentas(uCuentas);
+                  });
+                }}
               />
             }
           />

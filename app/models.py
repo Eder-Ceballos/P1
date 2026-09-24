@@ -38,3 +38,15 @@ class Suscripcion(models.Model):
 
     def __str__(self):
         return f"{self.nombre} - ${self.monto} ({self.frecuencia})"
+
+class MetaAhorro(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='metas_ahorro')
+    cuenta = models.ForeignKey(CuentaBancaria, on_delete=models.CASCADE, related_name='metas_ahorro')
+    nombre = models.CharField(max_length=120)
+    monto_objetivo = models.DecimalField(max_digits=12, decimal_places=2)
+    monto_actual = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    fecha_limite = models.DateField(null=True, blank=True)
+    fecha_creacion = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        return f"{self.nombre} - ${self.monto_actual}/${self.monto_objetivo} ({self.cuenta.nombre})"

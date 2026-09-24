@@ -235,6 +235,36 @@ export function AccountDetailModal({
         </div>
 
         {/* Pestañas de Navegación */}
+        {/* Resumen de Saldos de la Cuenta */}
+        <div style={{
+          backgroundColor: '#0f172a',
+          padding: '0.9rem 1.1rem',
+          borderRadius: '0.6rem',
+          border: '1px solid #334155',
+          marginBottom: '1.2rem',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <div>
+            <span style={{ fontSize: '0.78rem', color: '#94a3b8', display: 'block' }}>Saldo Libre Disponible</span>
+            <span style={{ fontSize: '1.4rem', fontWeight: 'bold', color: '#38bdf8' }}>
+              ${Math.round(cuenta.saldo_disponible ?? cuenta.saldo).toLocaleString('es-CO')}
+            </span>
+          </div>
+
+          <div style={{ textAlign: 'right' }}>
+            <span style={{ fontSize: '0.78rem', color: '#94a3b8', display: 'block' }}>Saldo Total en Cuenta</span>
+            <span style={{ fontSize: '0.95rem', fontWeight: 'bold', color: '#f8fafc' }}>
+              ${Math.round(cuenta.saldo).toLocaleString('es-CO')}
+            </span>
+            {cuenta.saldo_reservado_metas > 0 && (
+              <span style={{ fontSize: '0.75rem', color: '#c084fc', display: 'block', fontWeight: 'bold', marginTop: '0.1rem' }}>
+                🎯 Reservado: ${Math.round(cuenta.saldo_reservado_metas).toLocaleString('es-CO')}
+              </span>
+            )}
+          </div>
+        </div>
         <div style={styles.tabsRow}>
           <button
             style={{

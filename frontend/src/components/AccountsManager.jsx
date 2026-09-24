@@ -130,10 +130,16 @@ export function AccountsManager({ usuario }) {
                 <span style={styles.typeBadge}>{cuenta.tipo}</span>
               </div>
               <h3 style={styles.accountName}>{cuenta.nombre}</h3>
-              <p style={styles.balanceLabel}>Saldo Disponible</p>
+              <p style={styles.balanceLabel}>Saldo Libre Disponible</p>
               <p style={styles.balanceAmount}>
-                ${Math.round(parseFloat(cuenta.saldo)).toLocaleString('es-CO')}
+                ${Math.round(cuenta.saldo_disponible ?? cuenta.saldo).toLocaleString('es-CO')}
               </p>
+
+              {cuenta.saldo_reservado_metas > 0 && (
+                <div style={{ marginTop: '0.4rem', fontSize: '0.78rem', color: '#c084fc', fontWeight: 'bold' }}>
+                  🎯 Reservado: ${Math.round(cuenta.saldo_reservado_metas).toLocaleString('es-CO')}
+                </div>
+              )}
             </div>
           ))}
         </div>
