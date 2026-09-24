@@ -201,20 +201,48 @@ class TransferenciaEntreCuentasView(APIView):
             status=status.HTTP_200_OK
         )
 
-class LoginUsuarioView(APIView):
-    """Obtiene o crea automáticamente el usuario en la tabla auth_user de Django."""
+class RegistrarUsuarioView(APIView):
+    """Crea un nuevo usuario en la tabla auth_user de Django. Falla si ya existe."""
 
     def post(self, request):
         nombre = request.data.get('nombre', '').strip()
         if not nombre:
             return Response({'error': 'El nombre de usuario es requerido.'}, status=status.HTTP_400_BAD_REQUEST)
 
-        # Crear o recuperar usuario en auth_user
         username_clean = nombre.lower().replace(' ', '_')
-        usuario, _ = User.objects.get_or_create(
-            username=username_clean,
-            defaults={'first_name': nombre}
-        )
+
+        if User.objects.filter(username=username_clean).exists():
+            return Response(
+                {'error': f'El usuario "{nombre}" ya existe. Inicia sesión en su lugar.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        usuario = User.objects.create(username=username_clean, first_name=nombre)
+
+        return Response({
+            'id': usuario.id,
+            'nombre': usuario.first_name or usuario.username,
+            'username': usuario.username
+        }, status=status.HTTP_201_CREATED)
+
+
+class LoginUsuarioView(APIView):
+    """Autentica un usuario existente en la tabla auth_user de Django."""
+
+    def post(self, request):
+        nombre = request.data.get('nombre', '').strip()
+        if not nombre:
+            return Response({'error': 'El nombre de usuario es requerido.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        username_clean = nombre.lower().replace(' ', '_')
+
+        try:
+            usuario = User.objects.get(username=username_clean)
+        except User.DoesNotExist:
+            return Response(
+                {'error': f'El usuario "{nombre}" no existe. Regístrate primero.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
         return Response({
             'id': usuario.id,

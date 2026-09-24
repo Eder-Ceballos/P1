@@ -4,7 +4,8 @@ from .views import (
     DetalleTransaccionView,
     ReporteFinancieroView,
     TransferenciaEntreCuentasView,
-    LoginUsuarioView
+    LoginUsuarioView,
+    RegistrarUsuarioView
 )
 
 urlpatterns = [
@@ -14,4 +15,5 @@ urlpatterns = [
     path('transacciones/reporte/', ReporteFinancieroView.as_view(), name='reporte_financiero'),
     path('transacciones/transferir/', TransferenciaEntreCuentasView.as_view(), name='transferir_saldo'),
     path('transacciones/login-usuario/', LoginUsuarioView.as_view(), name='login_usuario'),
+    path('transacciones/registrar-usuario/', RegistrarUsuarioView.as_view(), name='registrar_usuario'),
 ]
