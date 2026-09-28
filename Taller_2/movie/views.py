@@ -6,7 +6,11 @@ from .models import Movie
 import matplotlib.pyplot as plt
 import matplotlib
 import io
+import os
 import urllib, base64
+import numpy as np
+from openai import OpenAI
+from dotenv import load_dotenv
 
 def home(request):
     # búsqueda de películas
@@ -101,3 +105,35 @@ def statistics_view(request):
 def signup(request):
     email = request.GET.get('email')
     return render(request, 'signup.html', {'email':email})
+
+def cosine_similarity(a, b):
+    return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+
+def recommend(request):
+    prompt = request.GET.get('prompt')
+    best_movie = None
+    max_similarity = None
+
+    if prompt:
+        load_dotenv('../openAI.env')
+        client = OpenAI(api_key=os.environ.get('openai_apikey'))
+
+        response = client.embeddings.create(
+            input=[prompt],
+            model="text-embedding-3-small"
+        )
+        prompt_emb = np.array(response.data[0].embedding, dtype=np.float32)
+
+        for movie in Movie.objects.all():
+            movie_emb = np.frombuffer(movie.emb, dtype=np.float32)
+            similarity = cosine_similarity(prompt_emb, movie_emb)
+
+            if max_similarity is None or similarity > max_similarity:
+                max_similarity = similarity
+                best_movie = movie
+
+    return render(request, 'recommend.html', {
+        'prompt': prompt,
+        'movie': best_movie,
+        'similarity': max_similarity,
+    })
