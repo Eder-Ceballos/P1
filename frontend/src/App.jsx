@@ -6,6 +6,7 @@ import { AccountsManager } from './components/AccountsManager';
 import { AnalyticsDashboard } from './components/AnalyticsDashboard';
 import { SubscriptionsManager } from './components/SubscriptionsManager';
 import { GoalsManager } from './components/GoalsManager';
+import { Feedback } from './components/Feedback';
 import { Sidebar } from './components/Sidebar';
 import { NotificationToast } from './components/NotificationToast';
 import { Menu, LogOut } from 'lucide-react';
@@ -76,8 +77,8 @@ export default function App() {
         return 'Reportes y Estadísticas';
       case '/metas':
         return 'Metas Financieras de Ahorro';
-      case '/asistente':
-        return 'Asistente IA';
+      case '/feedback':
+        return 'Feedback Financiero';
       default:
         return 'Panel Financiero';
     }
@@ -150,6 +151,10 @@ export default function App() {
                 }}
               />
             }
+          />
+          <Route
+            path="/feedback"
+            element={<Feedback usuario={usuario} />}
           />
           <Route path="*" element={<Navigate to="/dashboard" replace />} />
         </Routes>
