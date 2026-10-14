@@ -31,6 +31,8 @@ The system follows a **client-server architecture** with a React SPA frontend co
 - Added **Task Runner** node for `generar_feedback_semanal` management command
 - Frontend now includes **Feedback** page (`/feedback`) consuming `/ia/feedback/` endpoints
 
+![Deployment Diagram](docs/architecture/deployment.png)
+
 ---
 
 ### 1.2 Component Diagram
@@ -128,6 +130,8 @@ App.jsx (Router + Global State: usuario, cuentas, suscripciones)
 - Added **management command** for weekly batch generation
 - Frontend: new `Feedback.jsx`, `Sidebar.jsx` with Brain icon + badge
 
+![Component Diagram](docs/architecture/component.png)
+
 ---
 
 ### 1.3 Data Model (Relational Database Schema)
@@ -168,6 +172,8 @@ id | usuario_id (FK) | cuenta_id (FK) | monto | tipo (ingreso/gasto/transferenci
 - Added **servicio_preset** field to Suscripcion
 - Added **tope_gasto_mensual** to CuentaBancaria
 - Transaccion `tipo` now includes `'transferencia'` (was only ingreso/gasto)
+
+![Data Model Diagram](docs/architecture/data-model.png)
 
 ---
 
