@@ -1,4 +1,4 @@
-# Finance Project — Full‑stack Personal Finance Manager
+# FinancEZ Project — Full‑stack Personal Finance Manager
 
 A complete web application for personal finance management. It tracks income, expenses, bank accounts, recurring subscriptions, savings goals and provides AI‑driven feedback. The repository contains:
 
@@ -10,7 +10,7 @@ A complete web application for personal finance management. It tracks income, ex
 
 ---
 
-## 📦 Project Structure
+##  Project Structure
 ```
 ├── app/                # Core Django models (CuentaBancaria, Suscripcion, MetaAhorro, FeedbackIA)
 ├── transacciones/      # Transaction domain (DDD layers: domain, infra, services, views)
@@ -25,7 +25,7 @@ A complete web application for personal finance management. It tracks income, ex
 
 ---
 
-## 🛠 Technologies
+##  Technologies
 | Layer | Stack |
 |-------|-------|
 | Language | Python 3.11+, JavaScript (ES2024) |
@@ -37,13 +37,13 @@ A complete web application for personal finance management. It tracks income, ex
 
 ---
 
-## ⚙️ Prerequisites
+## Prerequisites
 * Python 3.11+ and `pip`
 * Node.js 18+ and `npm` (or `yarn`/`pnpm`)
 
 ---
 
-## 🚀 Getting Started
+##  Getting Started
 
 ### 1. Clone & create virtual environment
 ```bash
@@ -109,7 +109,7 @@ All endpoints are prefixed with `/api/` (configured in `core/urls.py` → `trans
 
 ---
 
-## 🗂 Core Data Models (Django)
+##  Core Data Models (Django)
 
 | Model | Key Fields |
 |-------|------------|
@@ -123,7 +123,7 @@ Business logic lives in `transacciones/services.py` (e.g., `registrar_gasto_con_
 
 ---
 
-## 🎨 Frontend Pages & Features
+##  Frontend Pages & Features
 | Route | Component | Main Features |
 |-------|-----------|---------------|
 | `/login` | `UserSelection` | Choose / create a user (calls register & login endpoints) |
@@ -148,7 +148,7 @@ cd frontend && npm test
 
 ---
 
-## 📁 Useful Commands
+##  Useful Commands
 | Action | Command |
 |--------|---------|
 | Create superuser | `python manage.py createsuperuser` |
@@ -158,7 +158,7 @@ cd frontend && npm test
 
 ---
 
-## 🤝 Contributing
+##  Contributing
 1. Fork the repo  
 2. Create a feature branch (`git checkout -b feature/xyz`)  
 3. Commit with clear messages  
@@ -166,5 +166,7 @@ cd frontend && npm test
 
 ---
 
-## 📄 License
-MIT – feel free to use, modify and distribute.
+## Integrants
+- Thommas Bedoya
+- Eder Ceballoz
+- David Guerra
