@@ -1,136 +1,170 @@
----
+# Finance Project — Full‑stack Personal Finance Manager
 
-# Finance Project — Backend API
+A complete web application for personal finance management. It tracks income, expenses, bank accounts, recurring subscriptions, savings goals and provides AI‑driven feedback. The repository contains:
 
-A web application for personal finance management, designed to track and manage income, expenses, and financial flows.
+* **Backend API** – Django 4.2 + Django REST Framework (DRF)  
+* **Frontend** – React 19 + Vite, React‑Router‑DOM, Axios, Lucide‑React  
+* **Database** – SQLite (development)  
 
-This repository contains the foundational API built with **Django** and **Django REST Framework (DRF)**, prepared for future integration with a **React** frontend and Artificial Intelligence microservices powered by **FastAPI**.
-
----
-
-##  Technologies Used
-
-* **Language:** Python 3.14+
-* **Web Framework:** Django 6.1.1
-* **API Framework:** Django REST Framework 3.18.1
-* **Database:** SQLite (Development)
+> **Note:** The AI micro‑service (FastAPI) is planned but not yet implemented.
 
 ---
 
-##  Prerequisites
-
-Make sure you have **Python** (version 3.14 or higher) and `pip` installed on your operating system.
+## 📦 Project Structure
+```
+├── app/                # Core Django models (CuentaBancaria, Suscripcion, MetaAhorro, FeedbackIA)
+├── transacciones/      # Transaction domain (DDD layers: domain, infra, services, views)
+├── core/               # Django project settings, URLs, WSGI/ASGI
+├── frontend/           # React + Vite SPA
+│   ├── src/
+│   │   ├── components/ # UI components (Dashboard, Accounts, Subscriptions, Goals, Analytics, Feedback, etc.)
+│   │   ├── api.js      # Axios instance pointing to http://127.0.0.1:8000
+│   │   └── App.jsx     # Routing & global state (user session, accounts, subscriptions)
+└── requirements.txt    # Python dependencies
+```
 
 ---
 
-##  Execution Instructions
+## 🛠 Technologies
+| Layer | Stack |
+|-------|-------|
+| Language | Python 3.11+, JavaScript (ES2024) |
+| Backend | Django 4.2, DRF 3.15 |
+| Frontend | React 19, Vite 5, React‑Router‑DOM 7, Axios |
+| Database | SQLite (dev) |
+| Linting | ESLint (frontend) |
+| Icons | Lucide‑React |
 
-Follow these steps in order to set up and run the local development environment.
+---
 
-### 1. Clone the repository and set up the virtual environment
+## ⚙️ Prerequisites
+* Python 3.11+ and `pip`
+* Node.js 18+ and `npm` (or `yarn`/`pnpm`)
 
+---
+
+## 🚀 Getting Started
+
+### 1. Clone & create virtual environment
 ```bash
-# Clone the repository
 git clone <REPOSITORY_URL>
 cd <FOLDER_NAME>
 
-# Create the virtual environment
 python -m venv venv
-
-# Activate the virtual environment
-# On Linux/macOS (Bash/Zsh):
+# Linux/macOS
 source venv/bin/activate
-
-# On Linux/macOS (Fish):
-source venv/bin/activate.fish
-
-# On Windows (CMD):
-venv\Scripts\activate.bat
-
-# On Windows (PowerShell):
+# Windows PowerShell
 venv\Scripts\Activate.ps1
-
 ```
 
-### 2. Install dependencies
-
-Install all required packages by running:
-
+### 2. Backend dependencies & DB
 ```bash
 pip install -r requirements.txt
-
-```
-
-### 3. Set up the Database
-
-Apply migrations to initialize the database schema (*Users*, *Categories*, *Accounts*, and *Transactions*):
-
-```bash
 python manage.py makemigrations
 python manage.py migrate
-
-```
-
-*(Optional)* Create a superuser to access and manage the platform via the Django admin panel:
-
-```bash
+# optional superuser for Django admin
 python manage.py createsuperuser
-
 ```
 
-### 4. Run the Server
-
-Start the local development server:
-
+### 3. Run Django development server
 ```bash
 python manage.py runserver
-
 ```
+API will be reachable at **http://127.0.0.1:8000/**.
 
-The server will be available at: **`[http://127.0.0.1:8000/](http://127.0.0.1:8000/)`**
+### 4. Frontend install & run (in a second terminal)
+```bash
+cd frontend
+npm install
+npm run dev
+```
+The React app starts on **http://127.0.0.1:5173/** (default Vite port) and proxies API calls to the Django server.
 
 ---
 
-##  API Endpoints
+## 📚 Backend API Endpoints
+All endpoints are prefixed with `/api/` (configured in `core/urls.py` → `transacciones/urls.py`).
 
-Currently, the system features the foundational transaction management module.
+| Method | Path | Description |
+|--------|------|-------------|
+| **GET** | `/transacciones/` | List transactions – query params: `usuario`, `cuenta`, `tipo` |
+| **POST** | `/transacciones/registrar/` | Register income (`tipo=ingreso`) or expense (`tipo=gasto`) |
+| **GET** | `/transacciones/<id>/` | Retrieve a single transaction |
+| **DELETE** | `/transacciones/<id>/` | Delete transaction (adjusts account balance) |
+| **GET** | `/transacciones/reporte/` | Financial report for a user (`usuario`) and optional `cuenta` |
+| **POST** | `/transacciones/transferir/` | Atomic transfer between two accounts of the same user |
+| **POST** | `/transacciones/registrar-usuario/` | Create a new Django `User` (username = lower‑cased name) |
+| **POST** | `/transacciones/login-usuario/` | Simple login by name (returns user id & name) |
+| **GET** | `/cuentas/` | List all bank accounts (filtered client‑side by user) |
+| **POST** | `/cuentas/` | Create a new account |
+| **GET** | `/suscripciones/?usuario=<id>` | List subscriptions for a user |
+| **POST** | `/suscripciones/` | Create subscription |
+| **POST** | `/suscripciones/procesar-autodebitos/` | Execute pending auto‑debits for a user |
+| **GET** | `/metas/?usuario=<id>` | List savings goals |
+| **POST** | `/metas/` | Create a savings goal |
+| **GET** | `/feedback/?usuario=<id>` | Retrieve AI feedback sections |
+| **POST** | `/feedback/` | Store / update feedback |
 
-### Register Manual Transaction
-
-* **URL:** `/api/transacciones/registrar/`
-* **Method:** `POST`
-* **Description:** Allows registering a new income or expense associated with a user.
-
-#### Request Body Example (`JSON`):
-
-```json
-{
-  "usuario": 1,
-  "tipo": "gasto",
-  "monto": "45000.00",
-  "fecha": "2026-09-08",
-  "descripcion": "Grocery shopping at Tienda D1",
-  "categoria": null,
-  "cuenta": null
-}
-
-```
-
-#### Responses:
-
-| Code | Status | Description |
-| --- | --- | --- |
-| `201 Created` | Success | Returns the created object including its assigned `id`. |
-| `400 Bad Request` | Error | Required fields are missing or the submitted data is invalid. |
+> The frontend consumes the above via `frontend/src/api.js` (Axios baseURL `http://127.0.0.1:8000`).
 
 ---
 
-##  System Architecture
+## 🗂 Core Data Models (Django)
 
-The project implements **Domain-Driven Design (DDD)** principles within its core applications (e.g., `transacciones/`), structuring internal logic into clear layers:
+| Model | Key Fields |
+|-------|------------|
+| **CuentaBancaria** | `usuario FK`, `nombre`, `tipo` (Ahorros / Corriente / Billetera Digital / Tarjeta de Crédito), `saldo`, `tope_gasto_mensual` |
+| **Transaccion** | `usuario FK`, `cuenta FK`, `monto`, `tipo` (ingreso / gasto / transferencia), `descripcion`, `fecha` |
+| **Suscripcion** | `usuario FK`, `cuenta FK`, `nombre`, `monto`, `frecuencia` (Mensual / Anual), `fecha_proximo_pago` |
+| **MetaAhorro** | `usuario FK`, `cuenta FK`, `nombre`, `monto_objetivo`, `monto_actual`, `fecha_limite` |
+| **FeedbackIA** | `usuario FK`, `sección` (general, cuentas, gastos, metas, suscripciones, reportes), `contenido`, `trigger`, `tokens_usados` |
 
-* **Domain (`domain/`):** Pure business logic and domain models.
-* **Infrastructure (`infra/`):** Database interactions, Django ORM, and external services.
-* **Services (`services/`):** Use cases and orchestration of financial flows.
+Business logic lives in `transacciones/services.py` (e.g., `registrar_gasto_con_proteccion_meta`, `obtener_reporte_financiero`).
 
-This decoupled separation facilitates system scalability and seamless future integration of modules such as advanced bank account management and automated AI categorization.
+---
+
+## 🎨 Frontend Pages & Features
+| Route | Component | Main Features |
+|-------|-----------|---------------|
+| `/login` | `UserSelection` | Choose / create a user (calls register & login endpoints) |
+| `/dashboard` | `AccountsManager` | List accounts, create new, show balance, quick transaction form |
+| `/suscripciones` | `SubscriptionsManager` | CRUD subscriptions, auto‑debit processing, upcoming charge toast |
+| `/analytics` | `AnalyticsDashboard` | Charts & summary (income vs expense, category breakdown) |
+| `/metas` | `GoalsManager` | Create / track savings goals, progress bars |
+| `/feedback` | `Feedback` | Display AI‑generated financial advice per section |
+
+Global state (`usuario`, `cuentas`, `suscripciones`) lives in `App.jsx`; a `NotificationToast` shows imminent subscription charges.
+
+---
+
+## 🧪 Running Tests
+```bash
+# Backend
+python manage.py test
+
+# Frontend (if test scripts added)
+cd frontend && npm test
+```
+
+---
+
+## 📁 Useful Commands
+| Action | Command |
+|--------|---------|
+| Create superuser | `python manage.py createsuperuser` |
+| Collect static (prod) | `python manage.py collectstatic` |
+| Lint frontend | `cd frontend && npm run lint` |
+| Build frontend for production | `cd frontend && npm run build` |
+
+---
+
+## 🤝 Contributing
+1. Fork the repo  
+2. Create a feature branch (`git checkout -b feature/xyz`)  
+3. Commit with clear messages  
+4. Push & open a Pull Request  
+
+---
+
+## 📄 License
+MIT – feel free to use, modify and distribute.
