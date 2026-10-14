@@ -24,7 +24,7 @@ export function AccountsManager({ usuario }) {
   const cargarCuentas = async () => {
     try {
       setLoading(true);
-      const res = await api.get('/cuentas/');
+      const res = await api.get(`/cuentas/?usuario=${usuario.id}`);
       const cuentasUsuario = res.data.filter((c) => c.usuario === usuario.id);
       setCuentas(cuentasUsuario);
     } catch {
