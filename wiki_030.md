@@ -33,32 +33,37 @@ The system follows a **client-server architecture** with a React SPA frontend co
 
 > **Tooling note:** The diagram below is expressed in Mermaid for version‑control friendliness. For the final deliverable it must be recreated in **draw.io / GenMyModel** using proper UML deployment notation.
 
-```mermaid
-flowchart LR
-    subgraph Client
-        Browser[("Client Browser\nReact 19 + Vite")]
-    end
-    subgraph Frontend
-        Vite[("Vite Dev Server\nPort 5173")]
-    end
-    subgraph Backend
-        Django[("API Gateway / Backend\nDjango 6.1 + DRF 3.18\nPort 8000")]
-        Mgmt[("Task Runner\nDjango Management Command\ngenerar_feedback_semanal")]
-    end
-    subgraph Data
-        SQLite[("Database\nSQLite 3.45")]
-    end
-    subgraph External
-        Groq[("Groq API\nllama-3.1-70b-versatile")]
-        OpenAI[("OpenAI API\ngpt-4o")]
-    end
+```genmymodel
+// Deployment Diagram (GenMyModel / UML Deployment Notation)
+node "Client Browser" as Browser {
+  technology = "React 19 + Vite"
+}
+node "Vite Dev Server" as Vite {
+  port = 5173
+}
+node "Django Backend" as Django {
+  technology = "Django 6.1 + DRF 3.18"
+  port = 8000
+}
+node "Task Runner" as Mgmt {
+  command = "generar_feedback_semanal"
+}
+node "SQLite Database" as SQLite {
+  version = "3.45"
+}
+node "Groq API" as Groq {
+  model = "llama-3.1-70b-versatile"
+}
+node "OpenAI API" as OpenAI {
+  model = "gpt-4o"
+}
 
-    Browser -->|HTTP| Vite
-    Browser -->|HTTP /api/*| Django
-    Django -->|Local file| SQLite
-    Django -->|HTTPS| Groq
-    Django -->|HTTPS| OpenAI
-    Mgmt --> Django
+Browser --> Vite : HTTP
+Browser --> Django : HTTP /api/*
+Django --> SQLite : Local file
+Django --> Groq : HTTPS
+Django --> OpenAI : HTTPS
+Mgmt --> Django : invokes
 ```
 
 ---
@@ -173,74 +178,74 @@ App.jsx (Router + Global State: usuario, cuentas, suscripciones)
 
 > **Tooling note:** The diagram below is expressed in Mermaid for version‑control friendliness. For the final deliverable it must be recreated in **draw.io / GenMyModel** using proper UML component notation.
 
-```mermaid
-classDiagram
-    namespace Backend {
-        class AppCore {
-            +accounts
-            +subscriptions
-            +goals
-        }
-        class Transacciones {
-            +TransaccionService
-            +ListaTransaccionesView
-            +DetalleTransaccionView
-            +ReporteFinancieroView
-            +TransferenciaEntreCuentasView
-            +RegistrarUsuarioView
-            +LoginUsuarioView
-        }
-        class IA {
-            +LLMClient
-            +FeedbackIAService
-            +ContextoFinancieroView
-            +FeedbackIAView
-            +FeedbackStatsView
-        }
-        class Accounts {
-            +CuentaBancaria
-            +Suscripcion
-            +MetaAhorro
-            +CuentasCRUD
-            +SuscripcionesCRUD
-            +MetasCRUD
-            +AutoDebitProcessing
-        }
+```genmymodel
+// Component Diagram (GenMyModel / UML Component Notation)
+package Backend {
+    component AppCore {
+        +accounts
+        +subscriptions
+        +goals
     }
-
-    namespace Frontend {
-        class App {
-            +Router
-            +GlobalState(usuario, cuentas, suscripciones)
-        }
-        class UserSelection
-        class Sidebar
-        class Dashboard
-        class AccountsManager
-        class AccountDetailModal
-        class TransactionForm
-        class SubscriptionsManager
-        class AnalyticsDashboard
-        class GoalsManager
-        class Feedback
-        class NotificationToast
-        class TransferModal
-        class ApiClient
+    component Transacciones {
+        +TransaccionService
+        +ListaTransaccionesView
+        +DetalleTransaccionView
+        +ReporteFinancieroView
+        +TransferenciaEntreCuentasView
+        +RegistrarUsuarioView
+        +LoginUsuarioView
     }
+    component IA {
+        +LLMClient
+        +FeedbackIAService
+        +ContextoFinancieroView
+        +FeedbackIAView
+        +FeedbackStatsView
+    }
+    component Accounts {
+        +CuentaBancaria
+        +Suscripcion
+        +MetaAhorro
+        +CuentasCRUD
+        +SuscripcionesCRUD
+        +MetasCRUD
+        +AutoDebitProcessing
+    }
+}
 
-    App --> UserSelection
-    App --> Sidebar
-    App --> Dashboard
-    App --> SubscriptionsManager
-    App --> AnalyticsDashboard
-    App --> GoalsManager
-    App --> Feedback
-    Dashboard --> AccountsManager
-    AccountsManager --> AccountDetailModal
-    AccountsManager --> TransactionForm
-    Sidebar --> App : reads suscripciones
-    Feedback --> IA : consumes /ia/feedback/*
-    ApiClient <-- Backend : Axios baseURL
+package Frontend {
+    component App {
+        +Router
+        +GlobalState(usuario, cuentas, suscripciones)
+    }
+    component UserSelection
+    component Sidebar
+    component Dashboard
+    component AccountsManager
+    component AccountDetailModal
+    component TransactionForm
+    component SubscriptionsManager
+    component AnalyticsDashboard
+    component GoalsManager
+    component Feedback
+    component NotificationToast
+    component TransferModal
+    component ApiClient
+}
+
+App --> UserSelection
+App --> Sidebar
+App --> Dashboard
+App --> SubscriptionsManager
+App --> AnalyticsDashboard
+App --> GoalsManager
+App --> Feedback
+Dashboard --> AccountsManager
+AccountsManager --> AccountDetailModal
+AccountsManager --> TransactionForm
+Sidebar --> App : reads suscripciones
+Feedback --> IA : consumes /ia/feedback/*
+ApiClient <-- Backend : Axios baseURL
 ```
 
 ---
@@ -286,65 +291,79 @@ id | usuario_id (FK) | cuenta_id (FK) | monto | tipo (ingreso/gasto/transferenci
 
 > **Tooling note:** The ER diagram below is expressed in Mermaid for version‑control friendliness. For the final deliverable it must be recreated in **GenMyModel** using proper RDS notation.
 
-```mermaid
-erDiagram
-    USER ||--o{ CUENTA_BANCARIA : "has"
-    USER ||--o{ SUSCRIPCION : "owns"
-    USER ||--o{ META_AHORRO : "sets"
-    USER ||--o{ TRANSACCION : "makes"
-    USER ||--o{ FEEDBACK_IA : "receives"
-    CUENTA_BANCARIA ||--o{ SUSCRIPCION : "linked to"
-    CUENTA_BANCARIA ||--o{ META_AHORRO : "linked to"
-    CUENTA_BANCARIA ||--o{ TRANSACCION : "records"
-    TRANSACCION {
-        int id PK
-        int usuario_id FK
-        int cuenta_id FK
-        decimal monto
-        enum tipo "ingreso|gasto|transferencia"
-        text descripcion
-        datetime fecha
-    }
-    CUENTA_BANCARIA {
-        int id PK
-        int usuario_id FK
-        string nombre
-        string tipo
-        decimal saldo
-        decimal tope_gasto_mensual
-        datetime fecha_creacion
-    }
-    SUSCRIPCION {
-        int id PK
-        int usuario_id FK
-        int cuenta_id FK
-        string nombre
-        string servicio_preset
-        decimal monto
-        string frecuencia
-        date fecha_proximo_pago
-        datetime fecha_creacion
-    }
-    META_AHORRO {
-        int id PK
-        int usuario_id FK
-        int cuenta_id FK
-        string nombre
-        decimal monto_objetivo
-        decimal monto_actual
-        date fecha_limite
-        datetime fecha_creacion
-    }
-    FEEDBACK_IA {
-        int id PK
-        int usuario_id FK
-        enum seccion
-        text contenido
-        int tokens_usados
-        enum trigger
-        datetime creado_en
-        datetime actualizado_en
-    }
+```genmymodel
+// Relational Data Schema (RDS) – GenMyModel Notation
+Table USER {
+    id PK int
+    username varchar
+    first_name varchar
+    // ... other auth_user fields
+}
+
+Table CUENTA_BANCARIA {
+    id PK int
+    usuario_id FK -> USER.id
+    nombre varchar
+    tipo varchar   // Ahorros, Corriente, Billetera Digital, Tarjeta de Crédito
+    saldo decimal(12,2)
+    tope_gasto_mensual decimal(12,2)
+    fecha_creacion datetime
+}
+
+Table SUSCRIPCION {
+    id PK int
+    usuario_id FK -> USER.id
+    cuenta_id FK -> CUENTA_BANCARIA.id
+    nombre varchar
+    servicio_preset varchar
+    monto decimal(12,2)
+    frecuencia varchar   // Mensual, Anual
+    fecha_proximo_pago date
+    fecha_creacion datetime
+}
+
+Table META_AHORRO {
+    id PK int
+    usuario_id FK -> USER.id
+    cuenta_id FK -> CUENTA_BANCARIA.id
+    nombre varchar
+    monto_objetivo decimal(12,2)
+    monto_actual decimal(12,2)
+    fecha_limite date
+    fecha_creacion datetime
+}
+
+Table TRANSACCION {
+    id PK int
+    usuario_id FK -> USER.id
+    cuenta_id FK -> CUENTA_BANCARIA.id
+    monto decimal(12,2)
+    tipo varchar   // ingreso, gasto, transferencia
+    descripcion text
+    fecha datetime
+}
+
+Table FEEDBACK_IA {
+    id PK int
+    usuario_id FK -> USER.id
+    seccion varchar   // general, cuentas, gastos, metas, suscripciones, reportes
+    contenido text
+    tokens_usados int
+    trigger varchar   // weekly, new_meta, new_suscripcion, large_gasto, meta_cumplida, manual
+    creado_en datetime
+    actualizado_en datetime
+    UNIQUE(usuario_id, seccion)
+}
+
+// Relationships (implicit via FK):
+// USER 1..* CUENTA_BANCARIA
+// USER 1..* SUSCRIPCION
+// USER 1..* META_AHORRO
+// USER 1..* TRANSACCION
+// USER 1..* FEEDBACK_IA
+// CUENTA_BANCARIA 1..* SUSCRIPCION
+// CUENTA_BANCARIA 1..* META_AHORRO
+// CUENTA_BANCARIA 1..* TRANSACCION
 ```
 
 ---
