@@ -31,7 +31,33 @@ The system follows a **client-server architecture** with a React SPA frontend co
 - Added **Task Runner** node for `generar_feedback_semanal` management command
 - Frontend now includes **Feedback** page (`/feedback`) consuming `/ia/feedback/` endpoints
 
-![Deployment Diagram](docs/architecture/deployment.png)
+```mermaid
+flowchart LR
+    subgraph Client
+        Browser[("Client Browser\nReact 19 + Vite")]
+    end
+    subgraph Frontend
+        Vite[("Vite Dev Server\nPort 5173")]
+    end
+    subgraph Backend
+        Django[("API Gateway / Backend\nDjango 6.1 + DRF 3.18\nPort 8000")]
+        Mgmt[("Task Runner\nDjango Management Command\ngenerar_feedback_semanal")]
+    end
+    subgraph Data
+        SQLite[("Database\nSQLite 3.x")]
+    end
+    subgraph External
+        Groq[("Groq API\nllama-3.1-70b-versatile")]
+        OpenAI[("OpenAI API\ngpt-4o")]
+    end
+
+    Browser -->|HTTP| Vite
+    Browser -->|HTTP /api/*| Django
+    Django -->|Local file| SQLite
+    Django -->|HTTPS| Groq
+    Django -->|HTTPS| OpenAI
+    Mgmt --> Django
+```
 
 ---
 
@@ -130,7 +156,77 @@ App.jsx (Router + Global State: usuario, cuentas, suscripciones)
 - Added **management command** for weekly batch generation
 - Frontend: new `Feedback.jsx`, `Sidebar.jsx` with Brain icon + badge
 
-![Component Diagram](docs/architecture/component.png)
+```mermaid
+classDiagram
+    namespace Backend {
+        class AppCore {
+            +accounts
+            +subscriptions
+            +goals
+        }
+        class Transacciones {
+            +TransaccionService
+            +ListaTransaccionesView
+            +DetalleTransaccionView
+            +ReporteFinancieroView
+            +TransferenciaEntreCuentasView
+            +RegistrarUsuarioView
+            +LoginUsuarioView
+        }
+        class IA {
+            +LLMClient
+            +FeedbackIAService
+            +ContextoFinancieroView
+            +FeedbackIAView
+            +FeedbackStatsView
+        }
+        class Accounts {
+            +CuentaBancaria
+            +Suscripcion
+            +MetaAhorro
+            +CuentasCRUD
+            +SuscripcionesCRUD
+            +MetasCRUD
+            +AutoDebitProcessing
+        }
+    }
+
+    namespace Frontend {
+        class App {
+            +Router
+            +GlobalState(usuario, cuentas, suscripciones)
+        }
+        class UserSelection
+        class Sidebar
+        class Dashboard
+        class AccountsManager
+        class AccountDetailModal
+        class TransactionForm
+        class SubscriptionsManager
+        class AnalyticsDashboard
+        class GoalsManager
+        class Feedback
+        class NotificationToast
+        class TransferModal
+        class ApiClient
+    }
+
+    App --> UserSelection
+    App --> Sidebar
+    App --> Dashboard
+    App --> SubscriptionsManager
+    App --> AnalyticsDashboard
+    App --> GoalsManager
+    App --> Feedback
+    Dashboard --> AccountsManager
+    AccountsManager --> AccountDetailModal
+    AccountsManager --> TransactionForm
+    Sidebar --> App : reads suscripciones
+    Feedback --> IA : consumes /ia/feedback/*
+    ApiClient <-- Backend : Axios baseURL
+```
+
+---
 
 ---
 
@@ -173,29 +269,120 @@ id | usuario_id (FK) | cuenta_id (FK) | monto | tipo (ingreso/gasto/transferenci
 - Added **tope_gasto_mensual** to CuentaBancaria
 - Transaccion `tipo` now includes `'transferencia'` (was only ingreso/gasto)
 
-![Data Model Diagram](docs/architecture/data-model.png)
+```mermaid
+erDiagram
+    USER ||--o{ CUENTA_BANCARIA : "has"
+    USER ||--o{ SUSCRIPCION : "owns"
+    USER ||--o{ META_AHORRO : "sets"
+    USER ||--o{ TRANSACCION : "makes"
+    USER ||--o{ FEEDBACK_IA : "receives"
+    CUENTA_BANCARIA ||--o{ SUSCRIPCION : "linked to"
+    CUENTA_BANCARIA ||--o{ META_AHORRO : "linked to"
+    CUENTA_BANCARIA ||--o{ TRANSACCION : "records"
+    TRANSACCION {
+        int id PK
+        int usuario_id FK
+        int cuenta_id FK
+        decimal monto
+        enum tipo "ingreso|gasto|transferencia"
+        text descripcion
+        datetime fecha
+    }
+    CUENTA_BANCARIA {
+        int id PK
+        int usuario_id FK
+        string nombre
+        string tipo
+        decimal saldo
+        decimal tope_gasto_mensual
+        datetime fecha_creacion
+    }
+    SUSCRIPCION {
+        int id PK
+        int usuario_id FK
+        int cuenta_id FK
+        string nombre
+        string servicio_preset
+        decimal monto
+        string frecuencia
+        date fecha_proximo_pago
+        datetime fecha_creacion
+    }
+    META_AHORRO {
+        int id PK
+        int usuario_id FK
+        int cuenta_id FK
+        string nombre
+        decimal monto_objetivo
+        decimal monto_actual
+        date fecha_limite
+        datetime fecha_creacion
+    }
+    FEEDBACK_IA {
+        int id PK
+        int usuario_id FK
+        enum seccion
+        text contenido
+        int tokens_usados
+        enum trigger
+        datetime creado_en
+        datetime actualizado_en
+    }
+```
+
+---
 
 ---
 
 ## 2. Corporate Image
 
-> **TODO — To be completed by team**  
-> - Logo (isotype/logotype)  
-> - Slogan  
-> - Color palette (hex codes)  
-> - Screenshots of main interfaces showing brand integration
+### Logo
+```svg
+<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="100" cy="100" r="96" fill="#0066FF"/>
+  <!-- White coin -->
+  <circle cx="100" cy="100" r="55" fill="white"/>
+  <!-- Coin inner detail -->
+  <circle cx="100" cy="100" r="38" fill="#F5F7FA"/>
+  <!-- Upward chart line -->
+  <polyline points="70,100 90,80 110,95 130,70" fill="none" stroke="#00C896" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Dot markers -->
+  <circle cx="70" cy="100" r="4" fill="#00C896"/>
+  <circle cx="90" cy="80" r="4" fill="#00C896"/>
+  <circle cx="110" cy="95" r="4" fill="#00C896"/>
+  <circle cx="130" cy="70" r="4" fill="#00C896"/>
+</svg>
+```
+
+### Slogan
+**“Organise. Collaborate. Deliver.”**
+
+### Colour Palette
+| Role | Hex | Swatch |
+|------|-----|--------|
+| Primary | `#0066FF` | ![#0066FF](https://via.placeholder.com/15/0066FF/000000?text=+) |
+| Secondary | `#00C896` | ![#00C896](https://via.placeholder.com/15/00C896/000000?text=+) |
+| Accent | `#FFB800` | ![#FFB800](https://via.placeholder.com/15/FFB800/000000?text=+) |
+| Dark Neutral | `#1E1E2F` | ![#1E1E2F](https://via.placeholder.com/15/1E1E2F/000000?text=+) |
+| Light Background | `#F5F7FA` | ![#F5F7FA](https://via.placeholder.com/15/F5F7FA/000000?text=+) |
+
+### Screenshots (placeholders – replace with real captures)
+<!-- SCREENSHOT: Login screen showing logo, primary button -->
+![Login](docs/screenshots/login.png)
+
+<!-- SCREENSHOT: Dashboard with brand colours -->
+![Dashboard](docs/screenshots/dashboard.png)
+
+<!-- SCREENSHOT: Project / account detail -->
+![Project Detail](docs/screenshots/project-detail.png)
+
+<!-- SCREENSHOT: Task / transaction board -->
+![Task Board](docs/screenshots/task-board.png)
 
 ---
 
-## 3. Repository
 
-> **TODO — To be completed by team**  
-> - Verify all members have descriptive commits  
-> - `requirements.txt` ✓ (listed in repo)  
-> - `README.md` ✓ (run instructions included)  
-> - Link to GitHub repo with commit history
-
----
 
 ## 4. Usability & User Experience Acceptance Test
 
