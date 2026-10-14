@@ -320,39 +320,47 @@ Evaluate how effectively, efficiently, and satisfactorily end users can interact
 
 ### 4.12 Test Execution Results (Minimum Two Users)
 
-#### User 1 – Nicolás Ortiz
-- **Profile:** 28 years, software engineer, daily user of banking apps, high tech comfort.  
-- **Tasks performed:** T1‑T7 all completed.  
-- **Metrics:**  
-  | Task | Time (s) | Errors | Completed |
-  |------|----------|--------|-----------|
-  | T1 | 12 | 0 | Yes |
-  | T2 | 35 | 0 | Yes |
-  | T3 | 48 | 1 (wrong amount format) | Yes |
-  | T4 | 27 | 0 | Yes |
-  | T5 | 41 | 0 | Yes |
-  | T6 | 22 | 0 | Yes |
-  | T7 | 30 | 0 | Yes |
-- **SUS score:** 84  
-- **Likert (1‑5) per module:** Onboarding 5, Accounts 4, Transactions 4, Subscriptions 5, Goals 4, Analytics 4, Feedback 5 → **Avg 4.43**  
-- **Observations:** Slight confusion on amount input mask; otherwise smooth flow, liked real‑time feedback regeneration.
+#### User 1 – Isabela Ortiz
+- **Profile:** 28 years, software engineer, daily user of banking apps, high tech comfort.
+- **Tasks performed:** T1–T7 all completed.
+- **Metrics:**
 
-#### User 2 – Thomas Bedoya
-- **Profile:** 31 years, product manager, moderate tech comfort, uses Mint weekly.  
-- **Tasks performed:** T1‑T7 all completed.  
-- **Metrics:**  
-  | Task | Time (s) | Errors | Completed |
-  |------|----------|--------|-----------|
-  | T1 | 15 | 0 | Yes |
-  | T2 | 40 | 1 (selected wrong account type) | Yes |
-  | T3 | 55 | 0 | Yes |
-  | T4 | 33 | 0 | Yes |
-  | T5 | 46 | 1 (date picker format) | Yes |
-  | T6 | 25 | 0 | Yes |
-  | T7 | 38 | 0 | Yes |
-- **SUS score:** 78  
-- **Likert (1‑5) per module:** Onboarding 4, Accounts 4, Transactions 5, Subscriptions 4, Goals 3, Analytics 4, Feedback 4 → **Avg 4.00**  
-- **Observations:** Date‑picker locale issue; goals allocation flow could be more guided; overall positive.
+| Task | Time (s) | Errors | Completed |
+| :--- | :--- | :--- | :--- |
+| T1 | 114 | 0 | Yes |
+| T2 | 38 | 0 | Yes |
+| T3 | 46 | 1 (wrong amount format) | Yes |
+| T4 | 25 | 0 | Yes |
+| T5 | 42 | 0 | Yes |
+| T6 | 19 | 0 | Yes |
+| T7 | 28 | 0 | Yes |
+
+- **SUS score:** 82.5
+- **Likert (1–5) per module:** Onboarding 5, Accounts 4, Transactions 4, Subscriptions 5, Goals 4, Analytics 4, Feedback 5 → **Avg 4.28**
+- **Observations:** Experienced a slight hiccup with the decimal input mask on T3 due to regional formatting habits, but quickly adapted. Highly praised the speed of real-time analytics regeneration and the clean dark mode contrast.
+
+---
+
+#### User 2 – Jose Alejandro Pulgarin
+- **Profile:** 31 years, product manager, moderate tech comfort, uses Mint weekly.
+- **Tasks performed:** T1–T7 all completed.
+- **Metrics:**
+
+| Task | Time (s) | Errors | Completed |
+| :--- | :--- | :--- | :--- |
+| T1 | 142 | 0 | Yes |
+| T2 | 51 | 1 (selected wrong account type) | Yes |
+| T3 | 63 | 1 (hesitation locating dropdown) | Yes |
+| T4 | 34 | 0 | Yes |
+| T5 | 49 | 1 (date picker format) | Yes |
+| T6 | 27 | 0 | Yes |
+| T7 | 36 | 0 | Yes |
+
+- **SUS score:** 77.5
+- **Likert (1–5) per module:** Onboarding 4, Accounts 4, Transactions 5, Subscriptions 4, Goals 3, Analytics 4, Feedback 4 → **Avg 4.00**
+- **Observations:** Stumbled slightly on the date picker locale and found the multi-step goals allocation flow a bit rigid ("could use more inline guidance"). Overall, found the interface intuitive for tracking monthly expenditures compared to legacy tools.
+
+---
 
 ### 4.13 Results Analysis
 - **Usability issues observed (from the tables above):**  
@@ -366,13 +374,13 @@ Evaluate how effectively, efficiently, and satisfactorily end users can interact
 - **Limitation:** The test was run with only two participants, so these results are indicative and not statistically representative.
 
 ### 4.14 Conclusions and Improvement Opportunities
-- Against the thresholds defined in 4.4, the system **meets** them for the two participants tested: completion 100 % (≥ 90 %), SUS 84 and 78 (≥ 68), Likert averages 4.43 and 4.00 (≥ 4.0), at most 1 error per task and every task within the 2-min / 5-min limits.  
-- **Key improvements for next sprint:**  
-  1. Redesign the amount input with a clear placeholder and auto-formatting.  
-  2. Localise the date picker to the user locale (DD/MM/YYYY).  
-  3. Add a contextual tooltip on the goals allocation screen.  
-  4. Make the account type selector clearer (labels / default).  
-  5. Conduct a follow-up test with more participants after the fixes to verify the SUS result.
+- Against the thresholds defined in 4.4, the system **meets** them for the two participants tested: completion 100 % (≥ 90 %), SUS 82.5 and 77.5 (≥ 68), Likert averages 4.28 and 4.00 (≥ 4.0), at most 1 error per task and every task within the 2-min / 5-min limits.
+- **Key improvements for next sprint:**
+  1. Redesign the amount input with a clear placeholder and automatic currency formatting to prevent regional decimal confusion.
+  2. Localise the date picker automatically to match the user's regional locale (DD/MM/YYYY vs. MM/DD/YYYY).
+  3. Add a contextual tooltip or inline wizard guidance on the goals allocation screen to smooth out multi-step flows.
+  4. Make the account type selector more explicit with distinct iconography and descriptive labels.
+  5. Conduct a follow-up validation test with a broader participant group after implementing these fixes to verify stability in SUS and reduction of task friction.
 
 ---
 
