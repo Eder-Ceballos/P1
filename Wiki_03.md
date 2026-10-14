@@ -337,26 +337,11 @@ erDiagram
 ## 2. Corporate Image
 
 ### Logo
-```svg
-<svg width="200" height="200" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
-  <!-- Background circle -->
-  <circle cx="100" cy="100" r="96" fill="#0066FF"/>
-  <!-- White coin -->
-  <circle cx="100" cy="100" r="55" fill="white"/>
-  <!-- Coin inner detail -->
-  <circle cx="100" cy="100" r="38" fill="#F5F7FA"/>
-  <!-- Upward chart line -->
-  <polyline points="70,100 90,80 110,95 130,70" fill="none" stroke="#00C896" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
-  <!-- Dot markers -->
-  <circle cx="70" cy="100" r="4" fill="#00C896"/>
-  <circle cx="90" cy="80" r="4" fill="#00C896"/>
-  <circle cx="110" cy="95" r="4" fill="#00C896"/>
-  <circle cx="130" cy="70" r="4" fill="#00C896"/>
-</svg>
-```
+<img width="2048" height="732" alt="image" src="https://github.com/user-attachments/assets/54eebca6-1405-4468-9de5-df4f6c622841" />
+
 
 ### Slogan
-**“Organise. Collaborate. Deliver.”**
+**Organiza hoy, respira mañana**
 
 ### Colour Palette
 | Role | Hex | Swatch |
