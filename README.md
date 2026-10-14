@@ -81,14 +81,14 @@ Create a file named `.env` in the project root (it is loaded automatically and i
 ```env
 LLM_API_KEY=your_api_key_here
 LLM_PROVIDER=groq
-LLM_MODEL=llama-3.1-70b-versatile
+LLM_MODEL=llama-3.3-70b-versatile
 ```
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
 | `LLM_API_KEY` | Only for AI feedback | — | API key of the LLM provider. Without it the application still works, but AI feedback is not generated. |
 | `LLM_PROVIDER` | No | `groq` | `groq` or `openai`. |
-| `LLM_MODEL` | No | `llama-3.1-70b-versatile` | Model name sent to the provider. When using `openai`, set it explicitly (for example `gpt-4o`), because the default is a Groq model. |
+| `LLM_MODEL` | No | `llama-3.3-70b-versatile` | Model name sent to the provider. When using `openai`, set it explicitly (for example `gpt-4o`), because the default is a Groq model. |
 
 ### 4. Create the database
 
@@ -163,7 +163,7 @@ All paths are prefixed with `/api/`.
 
 | Method | Path | Description |
 |--------|------|-------------|
-| GET | `/cuentas/` | Lists all accounts (the frontend filters them by user). |
+| GET | `/cuentas/?usuario=<id>` | Lists accounts; `usuario` is optional and filters by user. |
 | POST | `/cuentas/registrar/` | Creates an account (`usuario`, `nombre`, `tipo`, `saldo`, `tope_gasto_mensual`). |
 | GET / PUT / DELETE | `/cuentas/<id>/` | Retrieves, partially updates or deletes an account (deleting also removes its transactions). |
 
@@ -250,7 +250,7 @@ The diagrams are in [`docs/diagrams/`](docs/diagrams/).
 ## Development Notes
 
 * The configuration is meant for local development: `DEBUG` is enabled and the Django `SECRET_KEY` is in `core/settings.py`.
-* Authentication is name-only (no password) and `GET /api/cuentas/` returns the accounts of all users; both are limitations of the MVP.
+* Authentication is name-only (no password), a limitation of the MVP. `GET /api/cuentas/` returns every account unless `?usuario=<id>` is given (the frontend always sends it).
 
 ---
 

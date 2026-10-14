@@ -22,7 +22,7 @@ The system follows a **client-server architecture**. A React single-page applica
 | **Backend (application server)** | Django + Django REST Framework | 6.1.1 / 3.18.1 (Python 3.12+) | REST endpoints, business logic, ORM, name-only login |
 | **Database** | SQLite file `db.sqlite3` | SQLite 3, accessed through Python's `sqlite3` module and the Django ORM | Persistent storage (development) |
 | **Task runner** | Django management command `generar_feedback_semanal` | — | Batch generation of the weekly AI feedback (run manually or from cron / Task Scheduler) |
-| **External AI service** | Groq API (default) / OpenAI API | Groq default model `llama-3.1-70b-versatile`; for OpenAI set `LLM_MODEL` (e.g. `gpt-4o`) | LLM inference for financial feedback |
+| **External AI service** | Groq API (default) / OpenAI API | Groq default model `llama-3.3-70b-versatile`; for OpenAI set `LLM_MODEL` (e.g. `gpt-4o`) | LLM inference for financial feedback |
 
 **Network Connections:**
 - Browser → Vite dev server: HTTP, port 5173.

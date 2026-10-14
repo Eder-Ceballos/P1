@@ -18,7 +18,7 @@ class LLMClient:
     def __init__(self):
         self.provider = os.environ.get('LLM_PROVIDER', 'groq').lower()
         self.api_key = os.environ.get('LLM_API_KEY')
-        self.model = os.environ.get('LLM_MODEL', 'llama-3.1-70b-versatile')
+        self.model = os.environ.get('LLM_MODEL', 'llama-3.3-70b-versatile')
         
         if not self.api_key:
             raise ValueError("LLM_API_KEY no configurada en variables de entorno")
