@@ -367,18 +367,18 @@ erDiagram
 | Dark Neutral | `#1E1E2F` | ![#1E1E2F](https://via.placeholder.com/15/1E1E2F/000000?text=+) |
 | Light Background | `#F5F7FA` | ![#F5F7FA](https://via.placeholder.com/15/F5F7FA/000000?text=+) |
 
-### Screenshots (placeholders – replace with real captures)
-<!-- SCREENSHOT: Login screen showing logo, primary button -->
-![Login](docs/screenshots/login.png)
+### Screenshots
 
-<!-- SCREENSHOT: Dashboard with brand colours -->
-![Dashboard](docs/screenshots/dashboard.png)
+<img width="933" height="802" alt="image" src="https://github.com/user-attachments/assets/7e3ea814-ef89-49c9-bf05-4d6621153f01" />
 
-<!-- SCREENSHOT: Project / account detail -->
-![Project Detail](docs/screenshots/project-detail.png)
 
-<!-- SCREENSHOT: Task / transaction board -->
-![Task Board](docs/screenshots/task-board.png)
+<img width="1847" height="1042" alt="image" src="https://github.com/user-attachments/assets/6f53b4d0-6914-408b-8f44-b82a2bc6c341" />
+
+
+<img width="1843" height="831" alt="image" src="https://github.com/user-attachments/assets/b797cd1e-2d12-4155-ad71-bac86e24845a" />
+
+<img width="1828" height="977" alt="image" src="https://github.com/user-attachments/assets/b20d6a63-4f32-48fb-a284-73aef0f3080f" />
+
 
 ---
 
@@ -497,10 +497,10 @@ Evaluate how effectively, efficiently, and satisfactorily end users can interact
 > - Observations: pain points, confusion, positive comments
 
 **User 1**  
-*[To be filled]*
+*Nicolas Ortiz*
 
 **User 2**  
-*[To be filled]*
+*Thomas Bedoya*
 
 ### 4.13 Results Analysis
 > **TODO — Comparative analysis after both users tested**  
@@ -535,28 +535,30 @@ Evaluate how effectively, efficiently, and satisfactorily end users can interact
 | US-10 | Subscription Alerts | Sidebar badge + toast for payments due in ≤7 days | Done | Frontend |
 
 ### 5.2 Weekly Meetings
-> **TODO — To be completed by team**  
-> Record each weekly meeting:  
-> - What did you do last week?  
-> - What will you do this week?  
-> - Obstacles/blockers?  
-> Include Product Owner syncs and PM follow-ups.
+ 
+<img width="1082" height="647" alt="image" src="https://github.com/user-attachments/assets/b0aaf381-90a0-4ad6-b6cb-ab4b8c7c5159" />
+> - What did you do last week? = We organized a basic login sesion for the funcionability of the application
+> - What will you do this week?  = Solve some bugs that appeared during the implementation of the login page
+> - Obstacles/blockers?  = New bugs with the login page and some inconsistencies with the database
 
-### 5.3 Retrospective
-> **TODO — To be completed after Sprint Review**  
+<img width="1085" height="632" alt="image" src="https://github.com/user-attachments/assets/dcd25976-05e8-42b6-816a-1af55af30bda" />
+> - What did you do last week? = The login page is successfully completed
+> - What will you do this week?  = Decide how are we going to implement AI to the proyect (as a chatbot or a feedback given to the user)
+> - Obstacles/blockers?  = Comprehend the inconsistencies with the database
+
+<img width="1083" height="635" alt="image" src="https://github.com/user-attachments/assets/fd179a4c-1d3e-441a-8548-d19854f875ea" />
+> - What did you do last week? = Decide with the teacher what would be the best way to implement AI (it was feedback)
+> - What will you do this week?  = Start developing the AI structure to incorporate it to the proyecto
+> - Obstacles/blockers? = nothing
+
+<img width="1100" height="639" alt="image" src="https://github.com/user-attachments/assets/418ecc42-478e-4f0d-b892-eb00b4e48863" />
+> - What did you do last week? = Complete implementation of the AI section with the feedback organized to the user
+> - What will you do this week?  = Change the frontend of the AI section to make it look better
+> - Obstacles/blockers? = Make the LLM work and take the information of the user to make a personalized feedback
+
+
+### 5.3 Retrospective 
 > - **Continue:** What worked well?  
 > - **Start:** What should we begin doing?  
 > - **Stop:** What bottlenecks or problems to eliminate?
 
----
-
-## 6. Sprint Review
-> **TODO — To be completed during class**  
-> 1. **Pitch** (single team member)  
-> 2. **Demo** of highest-value features by team members  
->    - Show requirements developed this sprint  
->    - Focus on end-user value
-
----
-
-*Generated for Deliverable 3 — MVP. Sections 2, 3, 4.12–4.14, 5.2, 5.3, 6 require team input.*
