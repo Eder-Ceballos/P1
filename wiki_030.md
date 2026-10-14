@@ -6,72 +6,47 @@
 
 ### 1.1 Deployment Diagram
 
+![Deployment diagram — FinancEZ MVP (Sprint 3)](docs/diagrams/deployment.svg)
+
+Editable source (draw.io): [`docs/diagrams/deployment.drawio`](docs/diagrams/deployment.drawio) · image: [`docs/diagrams/deployment.svg`](docs/diagrams/deployment.svg)
+
 **Description:**  
-The system follows a **client-server architecture** with a React SPA frontend communicating via REST API to a Django backend, which persists data in SQLite (development) and integrates with external LLM providers (Groq/OpenAI) for AI-powered financial feedback.
+The system follows a **client-server architecture**. A React single-page application (SPA) runs in the user's browser and talks to a Django REST backend. During development the browser loads the SPA from the Vite dev server (port 5173), which proxies every `/api/*` request to Django (port 8000). Django persists the data in an SQLite file and, for the AI feedback feature, calls an external LLM provider (Groq by default, or OpenAI) over HTTPS.
 
 **Nodes & Technologies:**
 
 | Node | Technology | Version | Purpose |
 |------|------------|---------|---------|
-| **Client Browser** | React 19 + Vite | 19.2.8 / 8.3.0 | SPA rendering, routing, state management |
-| **Frontend Dev Server** | Vite Dev Server | 8.3.0 | Hot-module replacement, proxy to backend |
-| **API Gateway / Backend** | Django 6.1 + DRF 3.18 | 6.1.1 / 3.18.1 | REST endpoints, auth, business logic, ORM |
-| **Database** | SQLite | 3.45 (via sqlparse 0.6.0) | Persistent storage (dev) |
-| **Task Runner** | Django Management Commands | — | Weekly feedback generation cron |
-| **External AI Service** | Groq API (default) / OpenAI API | llama-3.1-70b-versatile / gpt-4o | LLM inference for financial feedback |
+| **Client machine / Web browser** | Chrome / Firefox running the React SPA | React 19.3.0, React Router DOM 7.18.4, Axios 1.20.0 | SPA rendering, routing, state management |
+| **Frontend dev server** | Vite | 8.3.0 | Serves and bundles the SPA, hot-module replacement, proxies `/api/*` to the backend |
+| **Backend (application server)** | Django + Django REST Framework | 6.1.1 / 3.18.1 (Python 3.12+) | REST endpoints, business logic, ORM, name-only login |
+| **Database** | SQLite file `db.sqlite3` | SQLite 3, accessed through Python's `sqlite3` module and the Django ORM | Persistent storage (development) |
+| **Task runner** | Django management command `generar_feedback_semanal` | — | Batch generation of the weekly AI feedback (run manually or from cron / Task Scheduler) |
+| **External AI service** | Groq API (default) / OpenAI API | Groq default model `llama-3.1-70b-versatile`; for OpenAI set `LLM_MODEL` (e.g. `gpt-4o`) | LLM inference for financial feedback |
 
 **Network Connections:**
-- Browser → Frontend Dev Server: HTTP (port 5173 default)
-- Browser → Backend API: HTTP (port 8000) **via Vite proxy `/api/*`**
-- Backend → Database: Local file (SQLite)
-- Backend → Groq/OpenAI: HTTPS (api.groq.com / api.openai.com)
+- Browser → Vite dev server: HTTP, port 5173.
+- Vite dev server → Django backend: HTTP, port 8000 (proxy of every `/api/*` request; the browser never calls port 8000 directly).
+- Django backend → SQLite: Django ORM, local file.
+- Django backend → Groq / OpenAI: HTTPS (`api.groq.com` / `api.openai.com`) using the `requests` library and the `LLM_API_KEY` environment variable.
+- Task runner (`manage.py generar_feedback_semanal`) → SQLite through the Django ORM, and → LLM provider over HTTPS. It runs as its own process and does not go through the HTTP API.
 
 **Changes from Previous Sprint:**
-- Added **External AI Service** node for LLM integration
-- Added **Task Runner** node for `generar_feedback_semanal` management command
-- Frontend now includes **Feedback** page (`/feedback`) consuming `/ia/feedback/` endpoints
-
-> **Tooling note:** The diagram below is expressed in Mermaid for version‑control friendliness. For the final deliverable it must be recreated in **draw.io / GenMyModel** using proper UML deployment notation.
-
-```genmymodel
-// Deployment Diagram (GenMyModel / UML Deployment Notation)
-node "Client Browser" as Browser {
-  technology = "React 19 + Vite"
-}
-node "Vite Dev Server" as Vite {
-  port = 5173
-}
-node "Django Backend" as Django {
-  technology = "Django 6.1 + DRF 3.18"
-  port = 8000
-}
-node "Task Runner" as Mgmt {
-  command = "generar_feedback_semanal"
-}
-node "SQLite Database" as SQLite {
-  version = "3.45"
-}
-node "Groq API" as Groq {
-  model = "llama-3.1-70b-versatile"
-}
-node "OpenAI API" as OpenAI {
-  model = "gpt-4o"
-}
-
-Browser --> Vite : HTTP
-Browser --> Django : HTTP /api/*
-Django --> SQLite : Local file
-Django --> Groq : HTTPS
-Django --> OpenAI : HTTPS
-Mgmt --> Django : invokes
-```
+- Added the **External AI service** node (Groq / OpenAI) for LLM integration.
+- Added the **Task runner** node for the `generar_feedback_semanal` management command.
+- Added the **`app.ia`** module to the backend.
+- Updated the React SPA: new **Feedback** page (`/feedback`) consuming the `/api/ia/feedback/` endpoints.
 
 ---
 
 ### 1.2 Component Diagram
 
+![Component diagram — FinancEZ MVP (Sprint 3)](docs/diagrams/components.svg)
+
+Editable source (draw.io): [`docs/diagrams/components.drawio`](docs/diagrams/components.drawio) · image: [`docs/diagrams/components.svg`](docs/diagrams/components.svg)
+
 **Architectural Overview:**  
-The backend follows a **Domain‑Driven Design (DDD)** layering (Domain, Infrastructure, Services, API). The frontend is organised by feature modules (pages/components). *Current `domain/` and `infra/` folders under `transacciones` are reserved for future entities/repositories; they are intentionally empty in this sprint.*
+The backend is a Django project (`core`) made of three Django apps: `app` (accounts, subscriptions, savings goals, `FeedbackIA` model), `transacciones` (transactions, reports, transfers, login/registration) and `app.ia` (AI feedback). Business rules live in service modules (`TransaccionService`, auto-debit processing, `FeedbackIAService`) and are exposed through DRF views. The `domain/` and `infra/` folders under `transacciones` are reserved for a future DDD layering (entities/repositories) and are intentionally empty in this sprint. The frontend is a React SPA organised by feature components; every component that talks to the server uses the shared Axios instance in `api.js`.
 
 #### Backend Components (Django Apps)
 
@@ -85,43 +60,16 @@ The backend follows a **Domain‑Driven Design (DDD)** layering (Domain, Infrast
 └────────┬─────────┴────────┬───────────┴──────────┬─────────────┘
          │                 │                      │
          ▼                 ▼                      ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                     DOMAIN LAYER (Pure Business Logic)           │
-│  • transacciones/domain/  →  Empty (reserved for future entities)│
-│  • app/models.py          →  CuentaBancaria, Suscripcion,       │
-│                              MetaAhorro, FeedbackIA              │
-└─────────────────────────────────────────────────────────────────┘
-         │
-         ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                   INFRASTRUCTURE LAYER                           │
-│  • transacciones/infra/   →  Empty (reserved for repos)         │
-│  • Django ORM             →  DB access via models               │
-└─────────────────────────────────────────────────────────────────┘
-         │
-         ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                    SERVICES LAYER (Use Cases)                    │
-│  • transacciones/services.py → TransaccionService               │
-│      - registrar_gasto_con_proteccion_meta()                    │
-│      - obtener_reporte_financiero()                             │
-│  • app/services.py         → procesar_autodebitos_suscripciones()│
-│  • app/ia/services.py      → FeedbackIAService, LLMClient       │
-└─────────────────────────────────────────────────────────────────┘
-         │
-         ▼
-┌─────────────────────────────────────────────────────────────────┐
-│                      API LAYER (DRF Views)                       │
-│  • transacciones/views.py  → ListaTransaccionesView,            │
-│      DetalleTransaccionView, ReporteFinancieroView,             │
-│      TransferenciaEntreCuentasView, RegistrarUsuarioView,       │
-│      LoginUsuarioView                                           │
-│  • app/views.py            → Cuentas CRUD, Suscripciones CRUD,  │
-│      Metas CRUD, Auto-debit processing                          │
-│  • app/ia/views.py         → ContextoFinancieroView,            │
-│      FeedbackIAView, FeedbackStatsView                          │
-└─────────────────────────────────────────────────────────────────┘
+   models (Django ORM)   services   →   views (DRF API layer)
 ```
+
+| Module | Main elements |
+|--------|---------------|
+| `app/` | Models `CuentaBancaria`, `Suscripcion`, `MetaAhorro`, `FeedbackIA`; `services.py` → `procesar_autodebitos_suscripciones()`; views for accounts, subscriptions and goals CRUD and auto-debit processing; `signals.py` (triggers AI feedback on new goal / subscription / large expense) |
+| `transacciones/` | Model `Transaccion`; `services.py` → `TransaccionService` (`registrar_gasto_con_proteccion_meta()`, `obtener_reporte_financiero()`); views `ListaTransaccionesView`, `DetalleTransaccionView`, `ReporteFinancieroView`, `TransferenciaEntreCuentasView`, `RegistrarUsuarioView`, `LoginUsuarioView`; empty `domain/` and `infra/` |
+| `app/ia/` | `LLMClient`, `FeedbackIAService`, prompts; views `ContextoFinancieroView`, `FeedbackIAView`, `FeedbackStatsView` |
+| `app/management/commands/` | `generar_feedback_semanal` (`--usuario-id`, `--force`) |
+| `core/` | Settings, root URLs, WSGI/ASGI |
 
 #### Frontend Components (React)
 
@@ -129,154 +77,94 @@ The backend follows a **Domain‑Driven Design (DDD)** layering (Domain, Infrast
 App.jsx (Router + Global State: usuario, cuentas, suscripciones)
 │
 ├── UserSelection (Login/Register)
-│
-├── Sidebar (Navigation + Subscription alerts badge)
+├── Sidebar (Navigation + subscription alerts badge)
+├── NotificationToast (Auto-debit alerts)
 │
 ├── Pages:
 │   ├── Dashboard (/dashboard) → AccountsManager
+│   │    ├── TransactionForm
+│   │    ├── TransactionHistory
 │   │    ├── AccountDetailModal
-│   │    └── TransactionForm
+│   │    └── TransferModal
 │   ├── Suscripciones (/suscripciones) → SubscriptionsManager
 │   ├── Analytics (/analytics) → AnalyticsDashboard
 │   ├── Metas (/metas) → GoalsManager
 │   └── Feedback (/feedback) → Feedback (6 tabs: General, Cuentas, Gastos, Metas, Suscripciones, Reportes)
 │
-├── Shared Components:
-│   ├── NotificationToast (Auto-debit alerts)
-│   └── TransferModal
-│
-└── api.js (Axios instance with baseURL)
+└── api.js (Axios instance with baseURL '/api')
 ```
 
 **Component Descriptions (per module)**  
+
 | Module | Responsibility |
 |--------|----------------|
-| **AppCore** | Holds global references to accounts, subscriptions, goals. |
-| **Transacciones** | Business logic for transactions, reports, transfers, auth. |
-| **IA** | LLM client, feedback generation, prompt handling. |
-| **Accounts** | CRUD for bank accounts, subscriptions, savings goals, auto‑debit processing. |
-| **Frontend App** | Routing, global state, composition root. |
-| **UserSelection** | Name‑only login/registration flow. |
-| **Sidebar** | Navigation, shows subscription‑due badge. |
-| **Dashboard / AccountsManager** | List/create/edit/delete accounts, show balances. |
-| **SubscriptionsManager** | CRUD subscriptions, upcoming payments. |
+| **app** | Accounts, subscriptions, savings goals, `FeedbackIA` model, auto-debit processing. |
+| **transacciones** | Business logic for transactions, reports, transfers and name-only login/registration. |
+| **app.ia** | LLM client, feedback generation, prompt handling, token statistics. |
+| **generar_feedback_semanal** | Management command that generates the six AI sections for users. |
+| **App.jsx** | Routing, global state, composition root. |
+| **UserSelection** | Name-only login/registration flow. |
+| **Sidebar** | Navigation, shows the subscription-due badge. |
+| **AccountsManager** | List/create/edit/delete accounts, show balances (page `/dashboard`). |
+| **TransactionForm / TransactionHistory** | Register income and expenses; transaction history with filters. |
+| **AccountDetailModal** | Account detail. |
+| **TransferModal** | Transfer money between accounts. |
+| **SubscriptionsManager** | CRUD subscriptions, upcoming payments, auto-debit processing. |
 | **AnalyticsDashboard** | Financial aggregates, recent transactions. |
 | **GoalsManager** | CRUD savings goals, allocate/release funds. |
-| **Feedback** | Tabbed view of 6 AI‑generated sections, per‑section regeneration. |
-| **NotificationToast** | Transient alerts for auto‑debits. |
-| **TransferModal** | Transfer money between accounts. |
-| **ApiClient** | Axios wrapper pointing to `/api`. |
+| **Feedback** | Tabbed view of 6 AI-generated sections, per-section regeneration. |
+| **NotificationToast** | Transient alerts for auto-debits. |
+| **api.js** | Axios instance pointing to `/api`. |
 
-**Component Dependencies:** (as listed previously)
+**Component Dependencies:**
+
+*Frontend (taken from the `import` statements of the code):*
+- `App.jsx` → `UserSelection`, `Sidebar`, `AccountsManager`, `SubscriptionsManager`, `AnalyticsDashboard`, `GoalsManager`, `Feedback`, `NotificationToast`, `api.js`.
+- `AccountsManager` → `TransactionForm`, `TransactionHistory`, `AccountDetailModal`, `TransferModal`, `api.js`.
+- `AccountDetailModal` → `SubscriptionsManager` (imports `SERVICES_CATALOG`) and `api.js`.
+- `Sidebar` → `NotificationToast` (imports `calcularDiasRestantes`).
+- `UserSelection`, `AnalyticsDashboard`, `GoalsManager`, `Feedback`, `SubscriptionsManager`, `TransactionForm`, `TransactionHistory`, `TransferModal` → `api.js`.
+- `api.js` → backend REST API (`/api/*`), through the Vite proxy in development.
+
+*Backend (taken from the `import` statements of the code):*
+- `app` (views, services) → `transacciones.models.Transaccion`; `transacciones` (models, services) → `app.models` (`CuentaBancaria`, `MetaAhorro`). The two apps therefore depend on each other at model level, a known coupling of the MVP.
+- `app.ia` → `app.models`, `transacciones.models` and `TransaccionService` (to build the financial context sent to the LLM) and → the external LLM provider over HTTPS.
+- `app.signals` → `app.ia.services.FeedbackIAService` (automatic feedback on new goal / subscription / large expense).
+- `generar_feedback_semanal` → `app.ia.services.FeedbackIAService`.
+- `core` → root URL configuration that includes `app.urls` (which in turn includes `app.ia.urls`) and `transacciones.urls`.
+- `app` and `transacciones` models → `db.sqlite3` through the Django ORM.
 
 **Changes from Previous Sprint:**
-- Added **app/ia/** module (LLMClient, FeedbackIAService, prompts)
-- Added **Feedback** page with 6‑section tabbed interface
-- Added **FeedbackIA** model for persisted AI responses
-- Added **management command** for weekly batch generation
-- Frontend: new `Feedback.jsx`, `Sidebar.jsx` with Brain icon + badge
-
-> **Tooling note:** The diagram below is expressed in Mermaid for version‑control friendliness. For the final deliverable it must be recreated in **draw.io / GenMyModel** using proper UML component notation.
-
-```genmymodel
-// Component Diagram (GenMyModel / UML Component Notation)
-package Backend {
-    component AppCore {
-        +accounts
-        +subscriptions
-        +goals
-    }
-    component Transacciones {
-        +TransaccionService
-        +ListaTransaccionesView
-        +DetalleTransaccionView
-        +ReporteFinancieroView
-        +TransferenciaEntreCuentasView
-        +RegistrarUsuarioView
-        +LoginUsuarioView
-    }
-    component IA {
-        +LLMClient
-        +FeedbackIAService
-        +ContextoFinancieroView
-        +FeedbackIAView
-        +FeedbackStatsView
-    }
-    component Accounts {
-        +CuentaBancaria
-        +Suscripcion
-        +MetaAhorro
-        +CuentasCRUD
-        +SuscripcionesCRUD
-        +MetasCRUD
-        +AutoDebitProcessing
-    }
-}
-
-package Frontend {
-    component App {
-        +Router
-        +GlobalState(usuario, cuentas, suscripciones)
-    }
-    component UserSelection
-    component Sidebar
-    component Dashboard
-    component AccountsManager
-    component AccountDetailModal
-    component TransactionForm
-    component SubscriptionsManager
-    component AnalyticsDashboard
-    component GoalsManager
-    component Feedback
-    component NotificationToast
-    component TransferModal
-    component ApiClient
-}
-
-App --> UserSelection
-App --> Sidebar
-App --> Dashboard
-App --> SubscriptionsManager
-App --> AnalyticsDashboard
-App --> GoalsManager
-App --> Feedback
-Dashboard --> AccountsManager
-AccountsManager --> AccountDetailModal
-AccountsManager --> TransactionForm
-Sidebar --> App : reads suscripciones
-Feedback --> IA : consumes /ia/feedback/*
-ApiClient <-- Backend : Axios baseURL
-```
+- Added the **`app.ia`** module (LLMClient, FeedbackIAService, prompts).
+- Added the **Feedback** page with a 6-section tabbed interface.
+- Added the **`FeedbackIA`** model for persisted AI responses.
+- Added the **management command** for weekly batch generation.
+- Frontend: new `Feedback.jsx`; `Sidebar.jsx` updated with Brain icon + badge.
 
 ---
 
 ### 1.3 Data Model (Relational Database Schema)
 
+![Relational data schema — FinancEZ MVP (Sprint 3)](docs/diagrams/data-model.svg)
+
+Editable source (draw.io): [`docs/diagrams/data-model.drawio`](docs/diagrams/data-model.drawio) · image: [`docs/diagrams/data-model.svg`](docs/diagrams/data-model.svg)
+
 **Current Tables (SQLite):**
 
-```sql
--- Django Auth
-auth_user (id, username, first_name, ...)
+| Table | Columns |
+|-------|---------|
+| `auth_user` (Django auth) | `id` PK, `username`, `first_name`, … |
+| `app_cuentabancaria` | `id` PK, `usuario_id` FK→auth_user, `nombre` varchar(100), `tipo` varchar(30), `saldo` decimal(12,2), `tope_gasto_mensual` decimal(12,2), `fecha_creacion` datetime |
+| `app_suscripcion` | `id` PK, `usuario_id` FK→auth_user, `cuenta_id` FK→app_cuentabancaria, `nombre` varchar(100), `servicio_preset` varchar(50), `monto` decimal(12,2), `frecuencia` varchar(20), `fecha_proximo_pago` date, `fecha_creacion` datetime |
+| `app_metaahorro` | `id` PK, `usuario_id` FK→auth_user, `cuenta_id` FK→app_cuentabancaria, `nombre` varchar(120), `monto_objetivo` decimal(12,2), `monto_actual` decimal(12,2), `fecha_limite` date NULL, `fecha_creacion` datetime |
+| `app_feedbackia` | `id` PK, `usuario_id` FK→auth_user, `seccion` varchar(20), `contenido` text, `tokens_usados` integer, `trigger` varchar(20), `creado_en` datetime, `actualizado_en` datetime — `UNIQUE(usuario_id, seccion)` |
+| `transacciones_transaccion` | `id` PK, `usuario_id` FK→auth_user, `cuenta_id` FK→app_cuentabancaria, `monto` decimal(12,2), `tipo` varchar(20) (ingreso / gasto / transferencia), `descripcion` varchar(255) NULL, `fecha` datetime |
 
--- app_cuentabancaria
-id | usuario_id (FK→auth_user) | nombre | tipo | saldo | tope_gasto_mensual | fecha_creacion
-
--- app_suscripcion
-id | usuario_id (FK) | cuenta_id (FK→app_cuentabancaria) | nombre | servicio_preset | monto | frecuencia | fecha_proximo_pago | fecha_creacion
-
--- app_metaahorro
-id | usuario_id (FK) | cuenta_id (FK) | nombre | monto_objetivo | monto_actual | fecha_limite | fecha_creacion
-
--- app_feedbackia
-id | usuario_id (FK) | seccion (choices) | contenido | tokens_usados | trigger (choices) | creado_en | actualizado_en
-  UNIQUE(usuario_id, seccion)
-
--- transacciones_transaccion
-id | usuario_id (FK) | cuenta_id (FK) | monto | tipo (ingreso/gasto/transferencia) | descripcion | fecha
-```
+Allowed values: `tipo` of an account = Ahorros, Corriente, Billetera Digital, Tarjeta de Crédito; `frecuencia` = Mensual, Anual; `seccion` = general, cuentas, gastos, metas, suscripciones, reportes; `trigger` = weekly, new_meta, new_suscripcion, large_gasto, meta_cumplida, manual.
 
 **Key Relationships:**
 - `User 1:N CuentaBancaria` (related_name=`cuentas`)
+- `User 1:N Suscripcion`, `User 1:N MetaAhorro`
 - `CuentaBancaria 1:N Suscripcion` (related_name=`suscripciones`)
 - `CuentaBancaria 1:N MetaAhorro` (related_name=`metas_ahorro`)
 - `User 1:N Transaccion` (related_name=`transacciones`)
@@ -284,87 +172,10 @@ id | usuario_id (FK) | cuenta_id (FK) | monto | tipo (ingreso/gasto/transferenci
 - `User 1:N FeedbackIA` (related_name=`feedbacks_ia`)
 
 **Changes from Previous Sprint:**
-- Added **app_feedbackia** table (6 sections per user, upsert on regen)
-- Added **servicio_preset** field to Suscripcion
-- Added **tope_gasto_mensual** to CuentaBancaria
-- Transaccion `tipo` now includes `'transferencia'` (was only ingreso/gasto)
-
-> **Tooling note:** The ER diagram below is expressed in Mermaid for version‑control friendliness. For the final deliverable it must be recreated in **GenMyModel** using proper RDS notation.
-
-```genmymodel
-// Relational Data Schema (RDS) – GenMyModel Notation
-Table USER {
-    id PK int
-    username varchar
-    first_name varchar
-    // ... other auth_user fields
-}
-
-Table CUENTA_BANCARIA {
-    id PK int
-    usuario_id FK -> USER.id
-    nombre varchar
-    tipo varchar   // Ahorros, Corriente, Billetera Digital, Tarjeta de Crédito
-    saldo decimal(12,2)
-    tope_gasto_mensual decimal(12,2)
-    fecha_creacion datetime
-}
-
-Table SUSCRIPCION {
-    id PK int
-    usuario_id FK -> USER.id
-    cuenta_id FK -> CUENTA_BANCARIA.id
-    nombre varchar
-    servicio_preset varchar
-    monto decimal(12,2)
-    frecuencia varchar   // Mensual, Anual
-    fecha_proximo_pago date
-    fecha_creacion datetime
-}
-
-Table META_AHORRO {
-    id PK int
-    usuario_id FK -> USER.id
-    cuenta_id FK -> CUENTA_BANCARIA.id
-    nombre varchar
-    monto_objetivo decimal(12,2)
-    monto_actual decimal(12,2)
-    fecha_limite date
-    fecha_creacion datetime
-}
-
-Table TRANSACCION {
-    id PK int
-    usuario_id FK -> USER.id
-    cuenta_id FK -> CUENTA_BANCARIA.id
-    monto decimal(12,2)
-    tipo varchar   // ingreso, gasto, transferencia
-    descripcion text
-    fecha datetime
-}
-
-Table FEEDBACK_IA {
-    id PK int
-    usuario_id FK -> USER.id
-    seccion varchar   // general, cuentas, gastos, metas, suscripciones, reportes
-    contenido text
-    tokens_usados int
-    trigger varchar   // weekly, new_meta, new_suscripcion, large_gasto, meta_cumplida, manual
-    creado_en datetime
-    actualizado_en datetime
-    UNIQUE(usuario_id, seccion)
-}
-
-// Relationships (implicit via FK):
-// USER 1..* CUENTA_BANCARIA
-// USER 1..* SUSCRIPCION
-// USER 1..* META_AHORRO
-// USER 1..* TRANSACCION
-// USER 1..* FEEDBACK_IA
-// CUENTA_BANCARIA 1..* SUSCRIPCION
-// CUENTA_BANCARIA 1..* META_AHORRO
-// CUENTA_BANCARIA 1..* TRANSACCION
-```
+- Added the **app_feedbackia** table (6 sections per user, upsert on regeneration).
+- Added the **servicio_preset** field to Suscripcion.
+- Added **tope_gasto_mensual** to CuentaBancaria.
+- Transaccion `tipo` now includes `'transferencia'` (was only ingreso/gasto).
 
 ---
 
@@ -408,7 +219,7 @@ Table FEEDBACK_IA {
 ## 4. Usability & User Experience Acceptance Test
 
 ### 4.1 System Information
-- **System Name:** Finanzas App — Personal Finance Manager
+- **System Name:** FinancEZ — Personal Finance Manager
 - **Version:** MVP v1.0
 
 ### 4.2 General Objective of the Test
@@ -427,7 +238,7 @@ Evaluate how effectively, efficiently, and satisfactorily end users can interact
 
 **Out of Scope:**
 - Admin panel (Django admin)
-- Automated weekly feedback generation (background task)
+- Scheduled execution of the weekly feedback command (`generar_feedback_semanal` is not evaluated by end users; the AI feedback itself is in scope through the Feedback page)
 - LLM prompt engineering / model selection
 - Production deployment / HTTPS / PostgreSQL migration
 - Multi-currency support
@@ -544,21 +355,24 @@ Evaluate how effectively, efficiently, and satisfactorily end users can interact
 - **Observations:** Date‑picker locale issue; goals allocation flow could be more guided; overall positive.
 
 ### 4.13 Results Analysis
-- **Common usability issues:**  
-  1. Amount input mask not intuitive for both users.  
-  2. Date picker shows US format (MM/DD/YYYY) while users expect DD/MM/YYYY.  
-  3. Goals allocation screen lacks inline help.
-- **Performance differences:** Nicolás completed tasks ~15 % faster; Thomas hesitated on date picker and goal allocation.
-- **System strengths:** Clean navigation, instant AI feedback regeneration, clear subscription badge.
-- **Critical pain points:** Input masks, date locale, missing inline guidance on goals.
+- **Usability issues observed (from the tables above):**  
+  1. Amount input format: Nicolás made one error on T3 (wrong amount format) and noted the amount input mask was confusing; Thomas had no error on this task.  
+  2. Date picker: Thomas made one error on T5 (date format) and reported a locale issue (the picker shows MM/DD/YYYY while he expected DD/MM/YYYY); Nicolás had no date errors.  
+  3. Goals allocation flow: Thomas rated Goals 3/5 and commented that the flow could be more guided.  
+  4. Account type selection: Thomas selected the wrong account type once on T2.
+- **Performance differences:** Total task time was 215 s for Nicolás and 252 s for Thomas (Nicolás ~15 % faster). Thomas's slowest tasks were T3 (55 s), T5 (46 s) and T2 (40 s).
+- **System strengths:** Both users completed all seven tasks; clean navigation, instant AI feedback regeneration (Feedback rated 5 and 4), clear subscription badge (Subscriptions rated 5 and 4).
+- **Critical pain points:** Input format of amounts, date locale, and missing inline guidance on goals.
+- **Limitation:** The test was run with only two participants, so these results are indicative and not statistically representative.
 
 ### 4.14 Conclusions and Improvement Opportunities
-- The system **meets** the predefined usability thresholds (completion 100 %, SUS ≥ 68, Likert ≥ 4).  
+- Against the thresholds defined in 4.4, the system **meets** them for the two participants tested: completion 100 % (≥ 90 %), SUS 84 and 78 (≥ 68), Likert averages 4.43 and 4.00 (≥ 4.0), at most 1 error per task and every task within the 2-min / 5-min limits.  
 - **Key improvements for next sprint:**  
-  1. Redesign amount input with clear placeholder and auto‑formatting.  
-  2. Localise date picker to user locale (DD/MM/YYYY).  
-  3. Add contextual tooltip on goals allocation screen.  
-  4. Conduct a follow‑up test after fixes to verify SUS increase.
+  1. Redesign the amount input with a clear placeholder and auto-formatting.  
+  2. Localise the date picker to the user locale (DD/MM/YYYY).  
+  3. Add a contextual tooltip on the goals allocation screen.  
+  4. Make the account type selector clearer (labels / default).  
+  5. Conduct a follow-up test with more participants after the fixes to verify the SUS result.
 
 ---
 
@@ -572,7 +386,7 @@ Evaluate how effectively, efficiently, and satisfactorily end users can interact
 | US-02 | CRUD Bank Accounts | Create/edit/delete accounts with type, balance, monthly cap | Done | **Thomas Bedoya** |
 | US-03 | Record Transactions | Income/Expense/Transfer with account, amount, description | Done | **Nicolás Ortiz** |
 | US-04 | Goal Protection on Expense | Expense > free balance → auto-deduct from goals + alert | Done | **Thomas Bedoya** |
-| US-05 | Subscriptions Auto-Debit | Daily cron processes due subscriptions → creates expense tx | Done | **Nicolás Ortiz** |
+| US-05 | Subscriptions Auto-Debit | Due subscriptions are processed by the auto-debit endpoint (`/api/suscripciones/procesar-autodebitos/`) → creates expense tx | Done | **Nicolás Ortiz** |
 | US-06 | Savings Goals CRUD | Create goals linked to account; allocate/release funds | Done | **Thomas Bedoya** |
 | US-07 | Financial Reports | Aggregate income/expense/transfer; recent transactions list | Done | **Nicolás Ortiz** |
 | US-08 | AI Feedback (6 sections) | Generate/read per-section feedback via LLM; token tracking | Done | **Thomas Bedoya** |
@@ -631,7 +445,7 @@ Evaluate how effectively, efficiently, and satisfactorily end users can interact
 ## 6. Sprint Review  
 
 **Pitch (delivered by Nicolás Ortiz):**  
-> “Finanzas App now offers a complete personal‑finance workspace: instant onboarding, multi‑account dashboard, transaction & subscription tracking, savings‑goal protection, analytical reports, and AI‑driven feedback—all behind a clean, brand‑consistent UI.”
+> “FinancEZ now offers a complete personal‑finance workspace: instant onboarding, multi‑account dashboard, transaction & subscription tracking, savings‑goal protection, analytical reports, and AI‑driven feedback—all behind a clean, brand‑consistent UI.”
 
 **Demo (by team members):**  
 1. **Login & onboarding** (Nicolás) – name‑only flow, instant dashboard.  
