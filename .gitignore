@@ -18,5 +18,11 @@ frontend/dist/
 .idea/
 .vscode/
 
+
 # Root node_modules (stray)
 /node_modules/
+
+#Logs
+app/migrations/*cache.py
+*.log
+

@@ -141,3 +141,40 @@ class FeedbackStatsView(APIView):
             'por_seccion': por_seccion,
             'total_feedbacks': feedbacks.count(),
         }, status=status.HTTP_200_OK)
+
+
+class FeedbackFullView(APIView):
+    """
+    POST: Genera (o devuelve de caché) el feedback completo de las seis secciones.
+    Body: { "usuario": <id>, "force": false }
+    """
+    def post(self, request):
+        usuario_id = request.data.get('usuario')
+        force = request.data.get('force', False)
+
+        if not usuario_id:
+            return Response(
+                {'error': 'El parámetro usuario es requerido.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            usuario_id = int(usuario_id)
+            User.objects.get(pk=usuario_id)
+        except (ValueError, User.DoesNotExist):
+            return Response(
+                {'error': 'Usuario no válido.'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        try:
+            sections = FeedbackIAService.generate_full_feedback(usuario_id, force)
+            return Response({
+                'mensaje': 'Feedback generado correctamente',
+                'feedback': sections
+            }, status=status.HTTP_200_OK)
+        except Exception as e:
+            return Response(
+                {'error': f'Error generando feedback completo: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

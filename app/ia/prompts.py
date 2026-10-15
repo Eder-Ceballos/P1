@@ -147,3 +147,29 @@ FORMATO:
 **Recomendación:** [Acción concreta basada en la métrica clave]
 """,
 }
+
+MASTER_PROMPT = """
+Eres un asesor financiero experto. Recibirás **todo** el contexto financiero del usuario en un solo JSON.
+Devuelve **exactamente** seis bloques, cada uno precedido por su cabecera en mayúsculas y dos puntos:
+
+GENERAL:
+<feedback general …>
+
+CUENTAS:
+<feedback de cuentas …>
+
+GASTOS:
+<feedback de gastos …>
+
+METAS:
+<feedback de metas …>
+
+SUSCRIPCIONES:
+<feedback de suscripciones …>
+
+REPORTES:
+<feedback de reportes …>
+
+CONTEXTO:
+{context}
+"""
