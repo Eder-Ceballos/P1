@@ -39,7 +39,7 @@ export default function App() {
           await api.post('/suscripciones/procesar-autodebitos/', { usuario: usuario.id });
 
           // 2. Cargar cuentas actualizadas
-          const resCuentas = await api.get('/cuentas/');
+          const resCuentas = await api.get(`/cuentas/?usuario=${usuario.id}`);
           const uCuentas = resCuentas.data.filter((c) => c.usuario === usuario.id);
           setCuentas(uCuentas);
 
@@ -144,7 +144,7 @@ export default function App() {
                 cuentas={cuentas}
                 onRefreshData={() => {
                   // Re-cargar cuentas para refrescar el saldo disponible
-                  api.get('/cuentas/').then((res) => {
+                  api.get(`/cuentas/?usuario=${usuario.id}`).then((res) => {
                     const uCuentas = res.data.filter((c) => c.usuario === usuario.id);
                     setCuentas(uCuentas);
                   });

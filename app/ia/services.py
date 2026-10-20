@@ -1,15 +1,17 @@
 import os
 import json
+import time
+import hashlib
 from decimal import Decimal
 from django.utils import timezone
 from django.db.models import Sum, Count
 from django.contrib.auth.models import User
 
-from app.models import CuentaBancaria, Suscripcion, MetaAhorro, FeedbackIA
+from app.models import CuentaBancaria, Suscripcion, MetaAhorro, FeedbackIA, FeedbackCache
 from transacciones.models import Transaccion
 from transacciones.services import TransaccionService
 
-from .prompts import PROMPTS, SECCIONES, UMBRAL_GASTO_GRANDE_PORCENTAJE
+from .prompts import PROMPTS, SECCIONES, UMBRAL_GASTO_GRANDE_PORCENTAJE, MASTER_PROMPT
 
 
 class LLMClient:
@@ -18,7 +20,7 @@ class LLMClient:
     def __init__(self):
         self.provider = os.environ.get('LLM_PROVIDER', 'groq').lower()
         self.api_key = os.environ.get('LLM_API_KEY')
-        self.model = os.environ.get('LLM_MODEL', 'llama-3.1-70b-versatile')
+        self.model = os.environ.get('LLM_MODEL', 'llama-3.3-70b-versatile')
         
         if not self.api_key:
             raise ValueError("LLM_API_KEY no configurada en variables de entorno")
@@ -35,8 +37,9 @@ class LLMClient:
             raise ValueError(f"Proveedor no soportado: {self.provider}")
     
     def _groq_completar(self, prompt: str, max_tokens: int, temperature: float) -> tuple[str, int]:
-        import requests
+        import requests, logging, time
         
+        logger = logging.getLogger(__name__)
         url = "https://api.groq.com/openai/v1/chat/completions"
         headers = {
             "Authorization": f"Bearer {self.api_key}",
@@ -49,17 +52,27 @@ class LLMClient:
             "temperature": temperature,
         }
         
-        response = requests.post(url, headers=headers, json=payload, timeout=30)
-        response.raise_for_status()
-        data = response.json()
-        
-        contenido = data['choices'][0]['message']['content'].strip()
-        tokens = data['usage']['total_tokens']
-        return contenido, tokens
+        for attempt in range(3):
+            try:
+                logger.info("Groq request attempt %d", attempt + 1)
+                response = requests.post(url, headers=headers, json=payload, timeout=20)
+                if response.status_code == 429:
+                    raise RuntimeError("Groq quota exhausted (429)")
+                response.raise_for_status()
+                data = response.json()
+                return data['choices'][0]['message']['content'].strip(), data['usage']['total_tokens']
+            except requests.exceptions.Timeout:
+                logger.warning("Groq timeout on attempt %d", attempt + 1)
+            except requests.exceptions.RequestException:
+                logger.exception("Groq request failed")
+                raise
+            time.sleep(2 ** attempt)
+        raise RuntimeError("Groq request timed out after retries")
     
     def _openai_completar(self, prompt: str, max_tokens: int, temperature: float) -> tuple[str, int]:
-        import requests
+        import requests, logging, time
         
+        logger = logging.getLogger(__name__)
         url = "https://api.openai.com/v1/chat/completions"
         headers = {
             "Authorization": f"Bearer {self.api_key}",
@@ -72,13 +85,25 @@ class LLMClient:
             "temperature": temperature,
         }
         
-        response = requests.post(url, headers=headers, json=payload, timeout=30)
-        response.raise_for_status()
-        data = response.json()
-        
-        contenido = data['choices'][0]['message']['content'].strip()
-        tokens = data['usage']['total_tokens']
-        return contenido, tokens
+        for attempt in range(3):  # max 3 attempts
+            try:
+                logger.info("OpenAI request attempt %d", attempt + 1)
+                response = requests.post(url, headers=headers, json=payload, timeout=20)
+                if response.status_code == 429:
+                    # Treat quota exhausted as non‑retryable to avoid long hangs
+                    raise RuntimeError("OpenAI quota exhausted (429)")
+                response.raise_for_status()
+                data = response.json()
+                contenido = data['choices'][0]['message']['content'].strip()
+                tokens = data['usage']['total_tokens']
+                return contenido, tokens
+            except requests.exceptions.Timeout:
+                logger.warning("OpenAI timeout on attempt %d", attempt + 1)
+            except requests.exceptions.RequestException as exc:
+                logger.exception("OpenAI request failed")
+                raise
+            time.sleep(2 ** attempt)  # 1s, 2s, 4s
+        raise RuntimeError("OpenAI request timed out after retries")
 
 
 def get_llm_client():
@@ -324,7 +349,7 @@ class FeedbackIAService:
         contexto = cls.obtener_contexto_completo(usuario_id)
         resultados = {}
         
-        for seccion in secciones:
+        for idx, seccion in enumerate(secciones):
             try:
                 contexto_seccion = cls._construir_contexto_seccion(contexto, seccion)
                 prompt = PROMPTS[seccion].format(
@@ -351,6 +376,10 @@ class FeedbackIAService:
                 
             except Exception as e:
                 resultados[seccion] = f"Error generando feedback: {str(e)}"
+            
+            # small delay between sections to avoid rate limits
+            if idx < len(secciones) - 1:
+                time.sleep(1)
         
         return resultados
     
@@ -401,3 +430,68 @@ class FeedbackIAService:
             'trigger': f.trigger,
             'actualizado_en': f.actualizado_en.isoformat(),
         } for f in qs}
+
+    @staticmethod
+    def _hash_context(ctx: dict) -> str:
+        """Genera un hash SHA256 del contexto serializado ordenado."""
+        serialized = json.dumps(ctx, sort_keys=True, ensure_ascii=False)
+        return hashlib.sha256(serialized.encode('utf-8')).hexdigest()
+
+    @classmethod
+    def build_full_context(cls, usuario_id: int) -> dict:
+        """Obtiene el contexto completo y le añade context_hash."""
+        contexto = cls.obtener_contexto_completo(usuario_id)
+        contexto['context_hash'] = cls._hash_context(contexto)
+        return contexto
+
+    @staticmethod
+    def _parse_master_answer(answer: str) -> dict:
+        """Divide la respuesta maestra en las seis secciones esperadas."""
+        sections = {}
+        current = None
+        lines = answer.splitlines()
+        for line in lines:
+            stripped = line.strip()
+            if stripped.upper().endswith(':') and stripped.upper()[:-1] in ('GENERAL','CUENTAS','GASTOS','METAS','SUSCRIPCIONES','REPORTES'):
+                current = stripped.upper()[:-1].lower()
+                sections[current] = ''
+            elif current:
+                sections[current] += line + '\n'
+        # strip trailing newlines
+        for k in sections:
+            sections[k] = sections[k].strip()
+        return sections
+
+    @classmethod
+    def generate_full_feedback(cls, usuario_id: int, force: bool = False) -> dict:
+        """Genera feedback de las seis secciones en una sola llamada al LLM, con caché por hash de contexto."""
+        full_ctx = cls.build_full_context(usuario_id)
+        ctx_hash = full_ctx.pop('context_hash')
+        # check cache
+        cached = FeedbackCache.objects.filter(usuario_id=usuario_id, context_hash=ctx_hash).first()
+        if cached and not force:
+            return cached.payload
+
+        # prepare master prompt
+        prompt = MASTER_PROMPT.format(context=json.dumps(full_ctx, ensure_ascii=False, indent=2))
+        respuesta, tokens = get_llm_client().completar(prompt, max_tokens=1500)
+        sections = cls._parse_master_answer(respuesta)
+
+        # persist each section in FeedbackIA
+        for sec, txt in sections.items():
+            FeedbackIA.objects.update_or_create(
+                usuario_id=usuario_id,
+                seccion=sec,
+                defaults={
+                    'contenido': txt,
+                    'tokens_usados': tokens // max(1, len(sections)),  # approx split
+                    'trigger': 'manual',
+                }
+            )
+        # save cache
+        FeedbackCache.objects.update_or_create(
+            usuario_id=usuario_id,
+            context_hash=ctx_hash,
+            defaults={'payload': sections}
+        )
+        return sections

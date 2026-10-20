@@ -85,3 +85,16 @@ class FeedbackIA(models.Model):
 
     def __str__(self):
         return f"Feedback {self.seccion} - {self.usuario.username}"
+
+
+class FeedbackCache(models.Model):
+    usuario = models.ForeignKey(User, on_delete=models.CASCADE, related_name='feedback_cache')
+    context_hash = models.CharField(max_length=64, db_index=True)
+    generated_at = models.DateTimeField(auto_now_add=True)
+    payload = models.JSONField()
+
+    class Meta:
+        unique_together = ['usuario', 'context_hash']
+
+    def __str__(self):
+        return f"FeedbackCache {self.usuario.username} - {self.context_hash[:8]}"
