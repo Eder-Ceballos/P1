@@ -1,3 +1,5 @@
+import os
+from pathlib import Path
 """
 Django settings for core project.
 
@@ -59,7 +61,7 @@ ROOT_URLCONF = 'core.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'frontend_dist'],  # <-- Agrega la ruta de frontend_dist
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -140,3 +142,9 @@ MAILERS = {
         'BACKEND': 'django.core.mail.backends.console.EmailBackend',
     },
 }
+
+STATIC_URL = 'assets/'
+
+STATICFILES_DIRS = [
+    BASE_DIR / 'frontend_dist' / 'assets',
+]
